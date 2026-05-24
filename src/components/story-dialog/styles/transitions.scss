@@ -1,0 +1,82 @@
+/**
+ * 节点转场动画样式
+ */
+
+// ============ 淡入淡出 ============
+.transition-fade-out {
+  animation: fadeOut 0.2s ease forwards;
+}
+
+.transition-fade-in {
+  animation: fadeIn 0.2s ease forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8rpx); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ============ 闪光（关键节点/结局）============
+.transition-flash-out {
+  animation: flashOut 0.15s ease forwards;
+}
+
+.transition-flash-in {
+  animation: flashIn 0.15s ease forwards;
+}
+
+@keyframes flashOut {
+  0% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 1; filter: brightness(3); }
+  100% { opacity: 0; filter: brightness(1); }
+}
+
+@keyframes flashIn {
+  0% { opacity: 0; filter: brightness(3); }
+  50% { opacity: 0.8; filter: brightness(2); }
+  100% { opacity: 1; filter: brightness(1); }
+}
+
+// ============ 滑入（选择分支后）============
+.transition-slide-out {
+  animation: slideOut 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.transition-slide-in {
+  animation: slideIn 0.25s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-40rpx); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(40rpx); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+// ============ 涟漪（位置触发）============
+.transition-ripple-out {
+  animation: rippleOut 0.3s ease forwards;
+}
+
+.transition-ripple-in {
+  animation: rippleIn 0.3s ease forwards;
+}
+
+@keyframes rippleOut {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.95); }
+}
+
+@keyframes rippleIn {
+  0% { opacity: 0; transform: scale(1.03); }
+  60% { opacity: 1; transform: scale(0.99); }
+  100% { opacity: 1; transform: scale(1); }
+}

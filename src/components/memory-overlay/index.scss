@@ -1,0 +1,780 @@
+@import '../../styles/variables.scss';
+
+// 遮罩层基础
+.memory-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  &.active {
+    pointer-events: auto;
+    opacity: 1;
+  }
+}
+
+// ============ 阶段一：发现提示 ============
+.stage-discover {
+  position: absolute;
+  bottom: 240rpx;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 40rpx;
+}
+
+.edge-particles {
+  position: absolute;
+  top: -100rpx;
+  left: 0;
+  right: 0;
+  height: 200rpx;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 8rpx;
+  height: 8rpx;
+  background: radial-gradient(circle, #C8A252 0%, transparent 70%);
+  border-radius: 50%;
+  animation: floatUp 3s ease-in-out infinite;
+}
+
+@keyframes floatUp {
+  0%, 100% {
+    opacity: 0;
+    transform: translateY(0) scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-80rpx) scale(1);
+  }
+}
+
+.discover-bar {
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+  border-radius: 60rpx;
+  padding: 4rpx;
+  border: 2rpx solid rgba(200, 162, 82, 0.5);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.4);
+  animation: barPulse 2s ease-in-out infinite;
+}
+
+@keyframes barPulse {
+  0%, 100% {
+    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.4), 0 0 20rpx rgba(200, 162, 82, 0.2);
+  }
+  50% {
+    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.4), 0 0 40rpx rgba(200, 162, 82, 0.4);
+  }
+}
+
+.discover-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx 40rpx;
+}
+
+.discover-icon {
+  font-size: 36rpx;
+  animation: iconSpin 3s ease-in-out infinite;
+}
+
+@keyframes iconSpin {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+}
+
+.discover-text {
+  font-size: 28rpx;
+  color: #F5E6C8;
+  font-weight: 500;
+}
+
+.discover-arrow {
+  font-size: 24rpx;
+  color: #C8A252;
+  margin-left: 12rpx;
+}
+
+// ============ 阶段二+三：对话面板 ============
+.stage-dialog {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.dialog-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.85) 100%);
+}
+
+.dialog-panel {
+  position: relative;
+  background: linear-gradient(180deg, rgba(26, 26, 46, 0.98) 0%, rgba(22, 33, 62, 0.98) 100%);
+  border-radius: 40rpx 40rpx 0 0;
+  border-top: 2rpx solid rgba(200, 162, 82, 0.4);
+  box-shadow: 0 -10rpx 60rpx rgba(0, 0, 0, 0.5);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  margin: 0 20rpx;
+  width: calc(100% - 40rpx);
+  box-sizing: border-box;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx 40rpx;
+  border-bottom: 1rpx solid rgba(200, 162, 82, 0.15);
+}
+
+.mode-badge {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background: rgba(200, 162, 82, 0.15);
+  padding: 12rpx 20rpx;
+  border-radius: 30rpx;
+}
+
+.mode-text-h {
+  font-size: 24rpx;
+  color: #C8A252;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.fragment-counter {
+  font-size: 24rpx;
+  color: rgba(245, 230, 200, 0.6);
+}
+
+.dialog-scroll-wrapper {
+  position: relative;
+  flex: 1;
+  max-height: 50vh;
+}
+
+.dialog-scroll {
+  flex: 1;
+  padding: 30rpx 30rpx;
+  max-height: 50vh;
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+// 底部渐变遮罩 + 箭头
+.scroll-hint {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(
+    0deg,
+    rgba(26, 26, 46, 1) 0%,
+    rgba(26, 26, 46, 0.8) 40%,
+    transparent 100%
+  );
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.3s;
+}
+
+.scroll-arrow {
+  font-size: 20px;
+  color: #F5C518;
+  animation: bounceDown 1.5s ease-in-out infinite;
+}
+
+@keyframes bounceDown {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50%      { transform: translateY(8px); opacity: 1; }
+}
+
+.dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hero-info {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 10rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hero-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(200, 162, 82, 0.5);
+  flex-shrink: 0;
+}
+
+.hero-name {
+  font-size: 28rpx;
+  color: #C8A252;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memory-bubble {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 24rpx;
+  padding: 30rpx;
+  border-left: 4rpx solid #C8A252;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+.memory-text {
+  font-size: 30rpx;
+  color: #F5E6C8;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-all;
+  max-width: 100%;
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 4rpx;
+  height: 1em;
+  background: #C8A252;
+  margin-left: 4rpx;
+  animation: blink 1s step-end infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.quote-block {
+  background: rgba(200, 162, 82, 0.1);
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-top: 20rpx;
+  opacity: 0;
+  transform: translateY(20rpx);
+  transition: all 0.5s ease;
+  width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  word-break: break-all;
+
+  &.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quote-line {
+  width: 60rpx;
+  height: 4rpx;
+  background: linear-gradient(90deg, #C8A252, transparent);
+  margin-bottom: 20rpx;
+}
+
+.quote-text {
+  display: block;
+  font-size: 28rpx;
+  color: #F5E6C8;
+  font-style: italic;
+  line-height: 1.8;
+  margin-bottom: 16rpx;
+  word-wrap: break-word;
+  word-break: break-all;
+  max-width: 100%;
+}
+
+.quote-source {
+  display: block;
+  font-size: 22rpx;
+  color: rgba(245, 230, 200, 0.5);
+  text-align: right;
+}
+
+// 彩蛋遮罩层 - CoverView覆盖原生组件
+.easter-egg-cover-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1099;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+// 彩蛋遮罩层
+.easter-egg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.easter-egg {
+  background: rgba(171, 71, 188, 0.2);
+  border: 2rpx solid rgba(171, 71, 188, 0.5);
+  border-radius: 24rpx;
+  padding: 40rpx;
+  width: 85%;
+  max-width: 600rpx;
+  box-sizing: border-box;
+}
+
+.egg-question {
+  font-size: 28rpx;
+  color: #F5E6C8;
+  margin-bottom: 24rpx;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.egg-options {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  justify-content: center;
+}
+
+.egg-option {
+  background: rgba(171, 71, 188, 0.2);
+  border: 1rpx solid rgba(171, 71, 188, 0.3);
+  border-radius: 40rpx;
+  padding: 20rpx 32rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #F5E6C8;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 0;
+  max-width: calc(50% - 8rpx);
+  box-sizing: border-box;
+  word-wrap: break-word;
+}
+
+.egg-option-hover {
+  background: rgba(171, 71, 188, 0.4);
+}
+
+.egg-skip-hint {
+  text-align: center;
+  font-size: 22rpx;
+  color: rgba(245, 230, 200, 0.5);
+  margin-top: 20rpx;
+}
+
+.egg-reply {
+  background: rgba(79, 195, 247, 0.15);
+  border-left-color: #4FC3F7;
+}
+
+// 对话底部
+.dialog-footer {
+  padding: 20rpx 40rpx 40rpx;
+  display: flex;
+  justify-content: center;
+  border-top: 1rpx solid rgba(200, 162, 82, 0.1);
+}
+
+.btn-skip,
+.btn-continue {
+  padding: 20rpx 50rpx;
+  border-radius: 40rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-skip {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(245, 230, 200, 0.7);
+}
+
+.btn-continue {
+  background: linear-gradient(135deg, #C8A252 0%, #B8941F 100%);
+  color: #1A1A2E;
+}
+
+// ============ 阶段四+五：碎片收集 ============
+.stage-collect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.collect-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10rpx);
+}
+
+.fragment-wrapper {
+  position: relative;
+  width: 500rpx;
+  height: 500rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.5s ease;
+
+  &.entered {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.orbit-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  animation: orbitRotate 20s linear infinite;
+}
+
+@keyframes orbitRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.orbit-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--size);
+  height: var(--size);
+  background: radial-gradient(circle, #C8A252 0%, transparent 70%);
+  border-radius: 50%;
+  transform: rotate(var(--angle)) translateX(var(--radius)) translate(-50%, -50%);
+  animation: particlePulse var(--duration) ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes particlePulse {
+  0%, 100% { opacity: 0.3; transform: rotate(var(--angle)) translateX(var(--radius)) translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.8; transform: rotate(var(--angle)) translateX(var(--radius)) translate(-50%, -50%) scale(1.3); }
+}
+
+.fragment-card {
+  position: relative;
+  width: 400rpx;
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+  border-radius: 24rpx;
+  padding: 40rpx;
+  border: 2rpx solid rgba(200, 162, 82, 0.4);
+  box-shadow: 
+    0 20rpx 60rpx rgba(0, 0, 0, 0.5),
+    0 0 40rpx var(--glow-color, rgba(200, 162, 82, 0.3));
+  text-align: center;
+}
+
+.fragment-icon {
+  font-size: 64rpx;
+  margin-bottom: 24rpx;
+}
+
+.fragment-text {
+  display: block;
+  font-size: 28rpx;
+  color: #F5E6C8;
+  line-height: 1.8;
+  margin-bottom: 30rpx;
+}
+
+.fragment-divider {
+  width: 100rpx;
+  height: 2rpx;
+  background: linear-gradient(90deg, transparent, #C8A252, transparent);
+  margin: 0 auto 20rpx;
+}
+
+.fragment-label {
+  display: block;
+  font-size: 22rpx;
+  color: rgba(200, 162, 82, 0.7);
+  margin-bottom: 12rpx;
+}
+
+.fragment-number {
+  display: block;
+  font-size: 24rpx;
+  color: #C8A252;
+  font-weight: bold;
+}
+
+.collect-btn-area {
+  position: absolute;
+  bottom: 200rpx;
+  left: 0;
+  right: 0;
+}
+
+// ============ 阶段六：书签解锁 ============
+.stage-bookmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 120rpx 40rpx 40rpx;
+  overflow-y: auto;
+}
+
+.bookmark-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8rpx);
+}
+
+.bookmark-unlock-title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 60rpx;
+}
+
+.unlock-line {
+  font-size: 28rpx;
+  color: rgba(200, 162, 82, 0.4);
+  letter-spacing: 4rpx;
+}
+
+.unlock-text {
+  font-size: 32rpx;
+  color: #C8A252;
+  font-weight: bold;
+}
+
+.bookmark-reveal-area {
+  position: relative;
+  transform: scale(1.1);
+}
+
+.bookmark-actions {
+  position: relative;
+  display: flex;
+  gap: 30rpx;
+  margin-top: 60rpx;
+}
+
+.action-btn {
+  min-width: 240rpx;
+  height: 88rpx;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &.primary {
+    background: linear-gradient(135deg, #C8A252 0%, #B8941F 100%);
+    color: #1A1A2E;
+    box-shadow: 0 8rpx 24rpx rgba(200, 162, 82, 0.4);
+  }
+
+  &.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #F5E6C8;
+    border: 1rpx solid rgba(200, 162, 82, 0.3);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// ============ 隐藏书签解锁 ============
+.stage-hidden {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 120rpx 40rpx 40rpx;
+  overflow-y: auto;
+}
+
+.hidden-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.hidden-merge {
+  position: relative;
+  width: 400rpx;
+  height: 400rpx;
+}
+
+.merge-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 180rpx;
+  height: 240rpx;
+  background: linear-gradient(135deg, rgba(200, 162, 82, 0.3) 0%, rgba(200, 162, 82, 0.1) 100%);
+  border: 2rpx solid rgba(200, 162, 82, 0.5);
+  border-radius: 16rpx;
+  transform: translate(-50%, -50%) rotate(calc(var(--i) * 90deg)) translateY(-120rpx);
+  opacity: 0.6;
+  transition: all 1s ease;
+
+  &.merge {
+    transform: translate(-50%, -50%) rotate(0deg) translateY(0);
+    opacity: 0;
+  }
+}
+
+.hidden-burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+
+  &.active {
+    opacity: 1;
+    animation: burstOut 1s ease-out forwards;
+  }
+}
+
+.burst-ring {
+  width: 100rpx;
+  height: 100rpx;
+  border: 4rpx solid #FFD700;
+  border-radius: 50%;
+  box-shadow: 0 0 60rpx #FFD700, inset 0 0 30rpx #FFD700;
+}
+
+@keyframes burstOut {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(8);
+    opacity: 0;
+  }
+}
+
+.hidden-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.5s ease;
+  padding-bottom: 60rpx;
+
+  &.show {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.hidden-achievement {
+  font-size: 40rpx;
+  color: #FFD700;
+  margin-bottom: 30rpx;
+  text-shadow: 0 4rpx 12rpx rgba(255, 215, 0, 0.5);
+}
+
+.hidden-title {
+  font-size: 36rpx;
+  color: #F5E6C8;
+  margin-bottom: 50rpx;
+}
+
+.hidden-bookmark-area {
+  transform: scale(1.35);
+  margin-bottom: 50rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hidden-quote {
+  font-size: 28rpx;
+  color: rgba(200, 162, 82, 0.8);
+  font-style: italic;
+  margin-bottom: 50rpx;
+}

@@ -1,0 +1,111 @@
+.poster-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10002;
+}
+
+.poster-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+
+.poster-close {
+  position: fixed;
+  top: 80rpx;
+  right: 80rpx;
+  width: 80rpx;
+  height: 80rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10003;
+}
+
+.close-icon {
+  font-size: 32rpx;
+  color: #fff;
+}
+
+/* 海报框架 - 9:16比例 */
+.poster-frame {
+  position: relative;
+  width: 75vw; /* 屏幕宽度的75% */
+  height: 133.33vw; /* 9:16比例 = 75 * 16/9 */
+  max-height: 70vh; /* 但不超过屏幕高度的70% */
+  max-width: 39.375vh; /* 对应max-height的9:16比例 */
+  background: #1a1a2e;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.5);
+}
+
+.poster-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.poster-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 底部操作栏 */
+.poster-actions {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 32rpx;
+}
+
+.action-btn {
+  height: 64rpx;
+  padding: 0 40rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn.primary {
+  background: #fff;
+}
+
+.btn-text {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.action-btn.primary .btn-text {
+  color: #1a1a2e;
+}
+
+.poster-hint {
+  margin-top: 24rpx;
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.4);
+}
