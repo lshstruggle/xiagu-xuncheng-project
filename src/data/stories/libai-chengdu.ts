@@ -21,7 +21,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '少侠，欢迎来到锦官城！九天开出一成都，万户千门入画图——此城之美，古今闻名。今日李某做东，带你领略这城中诗酒、电竞、羁绊之妙！',
+      content: '召唤师，欢迎来到锦官城！九天开出一成都，万户千门入画图——此城之美，古今闻名。今日李某做东，带你领略这城中诗酒、电竞、羁绊之妙！',
       emotion: 'happy',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/01-序章/001-prologue-start-happy.wav',
       media: {
@@ -48,7 +48,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '少侠你看，这春熙路果然名不虚传！霓虹闪烁，人潮如织，现代繁华与千年古韵在此交融。那边高楼林立，这边古刹深藏——这太古里与千年古刹大慈寺仅一墙之隔，正是"闹中取静"的绝佳写照。',
+      content: '召唤师你看，这春熙路果然名不虚传！霓虹闪烁，人潮如织，现代繁华与千年古韵在此交融。那边高楼林立，这边古刹深藏——这太古里与千年古刹大慈寺仅一墙之隔，正是"闹中取静"的绝佳写照。',
       emotion: 'excited',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/01-序章/002-prologue-chunxi-scene-excited.wav',
       media: {
@@ -75,7 +75,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '此地不仅有时尚名店、网红美食，更有那量子光电竞中心就在不远处——那里可是KPL西部主场，承载着无数少年电竞梦想的圣地。少侠，你觉得这现代繁华之地，可还入眼？',
+      content: '此地不仅有时尚名店、网红美食，更有那量子光电竞中心就在不远处——那里可是KPL西部主场，承载着无数少年电竞梦想的圣地。召唤师，你觉得这现代繁华之地，可还入眼？',
       emotion: 'happy',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/01-序章/003-prologue-chunxi-fashion-happy.wav'
     },
@@ -89,7 +89,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '少侠，今日你我先去何处？是寻诗酒风流，还是问道电竞江湖？',
+      content: '召唤师，今日你我先去何处？是寻诗酒风流，还是问道电竞江湖？',
       emotion: 'normal',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/01-序章/004-prologue-chunxi-choice-normal.wav'
     },
@@ -144,7 +144,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '少侠，随我来！下一站我们去大慈寺，感受古刹与繁华的交融之美。',
+      content: '召唤师，随我来！下一站我们去大慈寺，感受古刹与繁华的交融之美。',
       emotion: 'excited',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/02-第一章/006-ch1-temple-start-excited.wav'
     },
@@ -172,7 +172,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '登高而望，自有"今来一登望，如上九天游"之感。少侠，你我虽在凡尘，心却可向九天。下一站，我们去人民公园，品一盏盖碗茶，感受地道的成都安逸！',
+      content: '登高而望，自有"今来一登望，如上九天游"之感。召唤师，你我虽在凡尘，心却可向九天。下一站，我们去人民公园，品一盏盖碗茶，感受地道的成都安逸！',
       emotion: 'excited',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/02-第一章/008-ch1-temple-dialog2-excited.wav'
     },
@@ -193,7 +193,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '少侠，我们到了人民公园鹤鸣茶社！这里是成都慢生活的绝佳写照。',
+      content: '召唤师，我们到了人民公园鹤鸣茶社！这里是成都慢生活的绝佳写照。',
       emotion: 'happy',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/02-第一章/009-ch1-park-transition-happy.wav'
     },
@@ -262,7 +262,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '茶过三巡，诗酒已尽兴。少侠，下一站我们去武侯祠，感受君臣合祀的忠义之情，丞相与玄德公正在那里等候着我们！',
+      content: '茶过三巡，诗酒已尽兴。召唤师，下一站我们去武侯祠，感受君臣合祀的忠义之情，丞相与玄德公正在那里等候着我们！',
       emotion: 'excited',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/02-第一章/013-ch1-end-excited.wav'
     },
@@ -340,7 +340,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '少侠，午间 hungry 否？锦里古街就在隔壁，可要随我去尝尝那地道的成都味道？',
+      content: '召唤师，午间 hungry 否？锦里古街就在隔壁，可要随我去尝尝那地道的成都味道？',
       emotion: 'happy',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/03-第二章/017-ch2-wuhou-choice-happy.wav'
     },
@@ -372,7 +372,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '夫妻肺片，麻、辣、鲜、香；龙抄手，皮薄馅鲜。这夫妻肺片总店，藏着百年江湖味，最是下酒！吃饱喝足后，少侠，下一站我们去杜甫草堂，拜访诗圣的幽居之所。',
+      content: '夫妻肺片，麻、辣、鲜、香；龙抄手，皮薄馅鲜。这夫妻肺片总店，藏着百年江湖味，最是下酒！吃饱喝足后，召唤师，下一站我们去杜甫草堂，拜访诗圣的幽居之所。',
       emotion: 'excited',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/03-第二章/018-ch2-jinli-food-excited.wav'
     },
@@ -400,7 +400,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '少侠，我们到了杜甫草堂！这里可是诗圣杜甫流寓成都时的故居，让我带你感受诗圣当年的情怀。',
+      content: '召唤师，我们到了杜甫草堂！这里可是诗圣杜甫流寓成都时的故居，让我带你感受诗圣当年的情怀。',
       emotion: 'thoughtful',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/04-第三章/019-ch3-caotang-start-thoughtful.wav'
     },
@@ -428,7 +428,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '少陵野老，与李某虽未曾谋面，却神交已久。他那"安得广厦千万间"的胸怀，令李某敬佩。少侠，下一站我们去文殊院，寻一份内心的宁静。',
+      content: '少陵野老，与李某虽未曾谋面，却神交已久。他那"安得广厦千万间"的胸怀，令李某敬佩。召唤师，下一站我们去文殊院，寻一份内心的宁静。',
       emotion: 'normal',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/04-第三章/021-ch3-caotang-dialog2-normal.wav'
     },
@@ -484,7 +484,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '举头望明月，低头思故乡。少侠，行走江湖，莫忘初心。电竞之路漫漫，保持内心的宁静与热爱，方能走得更远。接下来，让我们去AG电竞中心，感受电竞的热血与激情！',
+      content: '举头望明月，低头思故乡。召唤师，行走江湖，莫忘初心。电竞之路漫漫，保持内心的宁静与热爱，方能走得更远。接下来，让我们去AG电竞中心，感受电竞的热血与激情！',
       emotion: 'normal',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/04-第三章/024-ch3-wenshu-dialog2-normal.wav'
     },
@@ -513,7 +513,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '前方就是AG电竞中心，少侠，准备好感受电竞的热血了吗？',
+      content: '前方就是AG电竞中心，召唤师，准备好感受电竞的热血了吗？',
       emotion: 'excited',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/05-第四章/025-ch4-ag-start-excited.wav',
       media: {
@@ -568,7 +568,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '近1000个观赛席位，顶尖XR系统、超大曲面立屏...这里承载着无数少年的电竞梦想。少侠，接下来我们去凤凰山体育公园，那里有着AG最辉煌的时刻！',
+      content: '近1000个观赛席位，顶尖XR系统、超大曲面立屏...这里承载着无数少年的电竞梦想。召唤师，接下来我们去凤凰山体育公园，那里有着AG最辉煌的时刻！',
       emotion: 'excited',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/05-第四章/028-ch4-ag-dialog2-excited.wav'
     },
@@ -591,7 +591,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '少侠，我们到了凤凰山体育公园！这里是2023年王者荣耀世界冠军杯总决赛的举办地，也是AG超玩会捧起冠军奖杯的荣耀之地！',
+      content: '召唤师，我们到了凤凰山体育公园！这里是2023年王者荣耀世界冠军杯总决赛的举办地，也是AG超玩会捧起冠军奖杯的荣耀之地！',
       emotion: 'excited',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/05-第四章/029-ch4-phoenix-start-excited.wav',
       media: {
@@ -735,7 +735,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '少侠，电竞之路，你觉得最重要的是什么？',
+      content: '召唤师，电竞之路，你觉得最重要的是什么？',
       emotion: 'normal',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/05-第四章/036-ch4-ag-choice-normal.wav'
     },
@@ -772,7 +772,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '天生我材必有用，千金散尽还复来。天赋确实是起点，但若无勤奋加持，终究难成大器。少侠，接下来我们去九眼桥，在灯火璀璨中结束今日的旅程！',
+      content: '天生我材必有用，千金散尽还复来。天赋确实是起点，但若无勤奋加持，终究难成大器。召唤师，接下来我们去九眼桥，在灯火璀璨中结束今日的旅程！',
       emotion: 'thoughtful',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/05-第四章/037-ch4-ag-ending-talent-thoughtful.wav'
     },
@@ -793,7 +793,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '正是如此！职业选手平均每天训练超过10小时，全年无休。Cat精准的支援背后，是看比赛录像记满的笔记。少侠，接下来我们去九眼桥，在灯火璀璨中结束今日的旅程！',
+      content: '正是如此！职业选手平均每天训练超过10小时，全年无休。Cat精准的支援背后，是看比赛录像记满的笔记。召唤师，接下来我们去九眼桥，在灯火璀璨中结束今日的旅程！',
       emotion: 'happy',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/05-第四章/038-ch4-ag-ending-effort-happy.wav',
       media: {
@@ -821,7 +821,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '说得好！我们一起赢，一起上场一起赢。胜利属于整个团队，包括替补、教练、粉丝——大家都是最佳第六人！少侠，接下来我们去九眼桥，在灯火璀璨中结束今日的旅程！',
+      content: '说得好！我们一起赢，一起上场一起赢。胜利属于整个团队，包括替补、教练、粉丝——大家都是最佳第六人！召唤师，接下来我们去九眼桥，在灯火璀璨中结束今日的旅程！',
       emotion: 'excited',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/05-第四章/039-ch4-ag-ending-team-excited.wav',
       media: {
@@ -850,7 +850,7 @@ const storyNodes: Record<string, StoryNode> = {
       speaker: '李白',
       speakerAvatar: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/卡通英雄头像/李白.png',
       speakerIllustration: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/李白半身像-removebg-preview.png',
-      content: '少侠，我们到了九眼桥！这里是成都夜生活的代表，灯火璀璨，如梦似幻。让我们在此为今日的旅程画上圆满的句号。',
+      content: '召唤师，我们到了九眼桥！这里是成都夜生活的代表，灯火璀璨，如梦似幻。让我们在此为今日的旅程画上圆满的句号。',
       emotion: 'happy',
       ttsAudio: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/tts/libai-story/06-终章/040-ch5-final-start-happy.wav'
     },

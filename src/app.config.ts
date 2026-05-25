@@ -50,7 +50,7 @@ export default defineAppConfig({
       },
       {
         pagePath: 'pages/ai/index',
-        text: 'AI伙伴'
+        text: '王者消消乐'
       },
       {
         pagePath: 'pages/user/index',
