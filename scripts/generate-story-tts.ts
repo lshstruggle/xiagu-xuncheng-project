@@ -48,7 +48,7 @@ const STORY_DIALOGUES = [
   // 序章
   {
     id: 'prologue-start',
-    text: '少侠，欢迎来到锦官城！九天开出一成都，万户千门入画图——此城之美，古今闻名。今日李某做东，带你领略这城中诗酒、电竞、羁绊之妙！',
+    text: '召唤师，欢迎来到锦官城！九天开出一成都，万户千门入画图——此城之美，古今闻名。今日李某做东，带你领略这城中诗酒、电竞、羁绊之妙！',
     emotion: 'happy',
     chapter: '序章'
   },
@@ -60,7 +60,7 @@ const STORY_DIALOGUES = [
   },
   {
     id: 'prologue-choice',
-    text: '少侠，今日你我先去何处？是寻诗酒风流，还是问道电竞江湖？',
+    text: '召唤师，今日你我先去何处？是寻诗酒风流，还是问道电竞江湖？',
     emotion: 'normal',
     chapter: '序章'
   },
@@ -74,7 +74,7 @@ const STORY_DIALOGUES = [
   },
   {
     id: 'ch1-temple-dialog2',
-    text: '登高而望，自有"今来一登望，如上九天游"之感。少侠，你我虽在凡尘，心却可向九天。',
+    text: '登高而望，自有"今来一登望，如上九天游"之感。召唤师，你我虽在凡尘，心却可向九天。',
     emotion: 'excited',
     chapter: '第一章'
   },
@@ -118,7 +118,7 @@ const STORY_DIALOGUES = [
   },
   {
     id: 'ch2-wuhou-choice',
-    text: '少侠，午间 hungry 否？锦里古街就在隔壁，可要随我去尝尝那地道的成都味道？',
+    text: '召唤师，午间 hungry 否？锦里古街就在隔壁，可要随我去尝尝那地道的成都味道？',
     emotion: 'happy',
     chapter: '第二章'
   },
@@ -150,7 +150,7 @@ const STORY_DIALOGUES = [
   },
   {
     id: 'ch3-wenshu-dialog2',
-    text: '举头望明月，低头思故乡。少侠，行走江湖，莫忘初心。电竞之路漫漫，保持内心的宁静与热爱，方能走得更远。',
+    text: '举头望明月，低头思故乡。召唤师，行走江湖，莫忘初心。电竞之路漫漫，保持内心的宁静与热爱，方能走得更远。',
     emotion: 'normal',
     chapter: '第三章'
   },
@@ -188,7 +188,7 @@ const STORY_DIALOGUES = [
   },
   {
     id: 'ch4-ag-choice',
-    text: '少侠，电竞之路，你觉得最重要的是什么？',
+    text: '召唤师，电竞之路，你觉得最重要的是什么？',
     emotion: 'normal',
     chapter: '第四章'
   },
