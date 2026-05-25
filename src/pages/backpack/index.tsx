@@ -220,7 +220,6 @@ export default function Backpack() {
               {/* 券背景图：改为正常文档流元素 */}
               {item.iconImage ? (
                 <>
-                  {console.log('渲染图片:', item.iconImage.substring(0, 50))}
                   <View
                     className='ticket-bg-view'
                     style={{
