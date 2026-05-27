@@ -277,3 +277,49 @@
   color: #1A1A2E;
   font-weight: bold;
 }
+
+/* --- 防御塔血条 --- */
+.tower-hp-bar-wrap {
+  position: absolute;
+  top: max(2vh, env(safe-area-inset-top, 20px));
+  left: 0;
+  width: 100%;
+  padding: 0 32px;
+  box-sizing: border-box;
+  z-index: 210;
+}
+
+.tower-hp-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tower-hp-name {
+  font-size: 28px;
+  color: #FFFFFF;
+  font-weight: bold;
+}
+
+.tower-hp-value {
+  font-size: 24px;
+  color: #3498DB;
+}
+
+.tower-hp-track {
+  height: 16px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.tower-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2980B9, #3498DB);
+  border-radius: 8px;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 12px rgba(52, 152, 219, 0.4);
+}

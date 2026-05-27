@@ -195,6 +195,12 @@ export default function User() {
           <Text className='menu-tag'>New</Text>
           <Text className='menu-arrow'>›</Text>
         </View>
+        <View className='menu-item' onClick={() => handleNav('poster-gallery')}>
+          <Text className='menu-icon'>🖼️</Text>
+          <Text className='menu-text'>海报储藏室</Text>
+          <Text className='menu-tag'>New</Text>
+          <Text className='menu-arrow'>›</Text>
+        </View>
       </View>
 
       {/* 底部安全间距 */}
