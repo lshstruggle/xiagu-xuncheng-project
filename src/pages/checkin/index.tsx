@@ -1,6 +1,6 @@
-import { View, Text, Map, Image, CoverView, ScrollView, Video, Input } from '@tarojs/components'
+import { View, Text, Map, Image, CoverView, CoverImage, ScrollView, Video, Input } from '@tarojs/components'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import Taro, { useDidShow } from '@tarojs/taro'
+import Taro, { useDidShow, useShareAppMessage } from '@tarojs/taro'
 import MemoryOverlay from '../../components/memory-overlay'
 import TreasureMap from '../../components/treasure-map'
 import RewardPopup, { RewardPopupRef } from '../../components/reward-popup'
@@ -11,7 +11,17 @@ import StoryDialog from '../../components/story-dialog'
 import StoryRoute from '../../components/story-route'
 import WebPet from '../../components/web-pet'
 import TowerQuizModal from '../../components/tower-quiz-modal'
+import BossMatchModal from '../../components/boss-match-modal'
+import BossChallenge from '../../components/boss-challenge'
 import { ALL_EASTER_EGGS } from '../../config/bond-traces-chengdu'
+import {
+  BOSSES,
+  BOSS_TRIGGER_RADIUS,
+  isBossOnCooldown,
+  setBossDefeated,
+  type BossType,
+  type BossConfig
+} from '../../config/bosses'
 import { getTempFileURL, preloadAllTempURLs } from '../../utils/temp-url-cache'
 import { heroAvatarFileIDs, bottomIconFileIDs, getHeroAvatar, getBottomIcon, preloadAllCloudImages } from '../../utils/cloud-assets'
 import './index.scss'
@@ -50,8 +60,14 @@ interface POIMarker {
   width: number
   height: number
   title: string
-  type: 'blue_buff' | 'red_buff' | 'tower' | 'spirit_lighthouse' | 'player_footprint' | 'club' | 'arena'
+  type: 'blue_buff' | 'red_buff' | 'tower' | 'spirit_lighthouse' | 'player_footprint' | 'club' | 'arena' | 'boss'
   anchor?: { x: number; y: number }
+  // 自定义气泡配置（用于 Boss 等复杂 UI）
+  customCallout?: {
+    anchorX?: number
+    anchorY?: number
+    display?: 'BYCLICK' | 'ALWAYS'
+  }
   // 详细信息字段
   category?: string
   story?: string
@@ -64,6 +80,8 @@ interface POIMarker {
   events?: string
   // 云存储图标标识
   iconType?: 'redBuff' | 'blueBuff' | 'tower' | 'spiritLighthouse' | 'club' | 'arena'
+  // Boss 专属字段
+  bossId?: BossType
 }
 
 // 地图图标云存储 File ID 配置
@@ -540,6 +558,23 @@ export default function Checkin() {
   // MVP定时器引用
   const mvpTimerRef = useRef<NodeJS.Timeout | null>(null)
 
+  // ========== Boss 挑战系统状态 ==========
+  const [bossDistances, setBossDistances] = useState<Record<BossType, number>>({
+    zhuzai: Infinity,
+    baojun: Infinity,
+    fengbolongwang: Infinity
+  })
+  const [showBossMatch, setShowBossMatch] = useState(false)
+  const [showBossChallenge, setShowBossChallenge] = useState(false)
+  const [showBossVictoryModal, setShowBossVictoryModal] = useState(false)
+  const [bossVictoryRewards, setBossVictoryRewards] = useState<BossConfig['rewards'] | null>(null)
+  const [activeBossId, setActiveBossId] = useState<BossType | null>(null)
+  const [bossGifUrls, setBossGifUrls] = useState<Record<BossType, { idle: string; attack: string }>>({
+    zhuzai: { idle: '', attack: '' },
+    baojun: { idle: '', attack: '' },
+    fengbolongwang: { idle: '', attack: '' }
+  })
+
   // 故事系统状态
   const [exploreMode, setExploreModeState] = useState<StoryMode>('free')
   const [storyProgress, setStoryProgress] = useState<UserStoryProgress | null>(null)
@@ -638,6 +673,26 @@ export default function Checkin() {
 
     // 预加载云存储图片（英雄头像、图标等）
     preloadAllCloudImages().catch(console.error)
+
+    // 预加载Boss GIF临时链接
+    const loadBossGifs = async () => {
+      const urls: Record<BossType, { idle: string; attack: string }> = {
+        zhuzai: { idle: '', attack: '' },
+        baojun: { idle: '', attack: '' },
+        fengbolongwang: { idle: '', attack: '' }
+      }
+      await Promise.all(
+        BOSSES.map(async (boss) => {
+          const [idle, attack] = await Promise.all([
+            getTempFileURL(boss.idleGif),
+            getTempFileURL(boss.attackGif)
+          ])
+          urls[boss.id] = { idle: idle || '', attack: attack || '' }
+        })
+      )
+      setBossGifUrls(urls)
+    }
+    loadBossGifs().catch(console.error)
 
     // 加载云存储图片 URL
     const loadCloudImages = async () => {
@@ -755,6 +810,34 @@ export default function Checkin() {
 
     // 初始化故事系统
     initStorySystem()
+
+    // 检查是否从分享卡片进入（携带bossId参数）
+    const pages = Taro.getCurrentPages()
+    const currentPage = pages[pages.length - 1]
+    const queryBossId = currentPage?.options?.bossId as BossType | undefined
+    if (queryBossId && BOSSES.some(b => b.id === queryBossId)) {
+      // 延迟打开匹配界面，确保地图已加载
+      setTimeout(() => {
+        setActiveBossId(queryBossId)
+        setShowBossMatch(true)
+      }, 800)
+    }
+  })
+
+  // 分享配置
+  useShareAppMessage(() => {
+    if (activeBossId) {
+      const boss = BOSSES.find(b => b.id === activeBossId)
+      return {
+        title: `【峡谷寻城记】来一起挑战${boss?.title || 'Boss'}！`,
+        path: `/pages/checkin/index?bossId=${activeBossId}`,
+        imageUrl: bossGifUrls[activeBossId]?.attack || ''
+      }
+    }
+    return {
+      title: '峡谷寻城记 - 探索成都，发现王者世界',
+      path: '/pages/checkin/index'
+    }
   })
 
   // 初始化故事系统
@@ -1651,11 +1734,32 @@ export default function Checkin() {
         anchor: { x: 0.5, y: 1.0 }
       }
     })
-    setMarkers(poiList)
+
+    // 追加 Boss markers（使用透明占位图，UI 通过 customCallout 渲染）
+    const transparentPixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+    const bossMarkerList: POIMarker[] = BOSSES.map((boss, idx) => ({
+      id: 10001 + idx,
+      latitude: boss.latitude,
+      longitude: boss.longitude,
+      iconPath: transparentPixel,
+      width: 1,
+      height: 1,
+      title: boss.title,
+      type: 'boss' as const,
+      anchor: { x: 0.5, y: 0.5 },
+      customCallout: {
+        anchorX: 0,
+        anchorY: 0,
+        display: 'ALWAYS'
+      },
+      bossId: boss.id
+    }))
+
+    setMarkers([...poiList, ...bossMarkerList])
   }, [])
 
-  // 检查附近POI
-  const checkNearbyPOI = useCallback((lat: number, lng: number) => {
+    // 检查附近POI
+    const checkNearbyPOI = useCallback((lat: number, lng: number) => {
     // 剧情模式下不弹出打卡小卡片
     if (exploreMode === 'explore' && showStoryDialog) {
       return
@@ -1664,6 +1768,8 @@ export default function Checkin() {
     const TRIGGER_RADIUS = 80
     const now = Date.now()
     markers.forEach(marker => {
+      // Boss 不触发打卡小卡片
+      if (marker.type === 'boss') return
       const distance = haversineDistance(lat, lng, marker.latitude, marker.longitude)
       // 检查是否在触发范围内，且没有正在显示的POI，且不在冷却期内，且未打卡过
       const cooldownEnd = poiCooldowns[marker.id] || 0
@@ -1699,7 +1805,81 @@ export default function Checkin() {
     if (exploreMode !== 'explore' || !showStoryDialog) {
       checkBondTraces(lat, lng)
     }
+
+    // 检查Boss距离
+    checkBossDistances(lat, lng)
   }, [markers, nearbyPOI, poiCooldowns, showAGHistoryDialog, showAGVideo, showArenaHistoryDialog, showArenaVideo, checkedInPOIIds, exploreMode, showStoryDialog])
+
+  // ========== Boss挑战系统 ==========
+  const checkBossDistances = useCallback((lat: number, lng: number) => {
+    const newDistances: Record<BossType, number> = {
+      zhuzai: Infinity,
+      baojun: Infinity,
+      fengbolongwang: Infinity
+    }
+    BOSSES.forEach(boss => {
+      const distance = haversineDistance(lat, lng, boss.latitude, boss.longitude)
+      newDistances[boss.id] = distance
+    })
+    setBossDistances(newDistances)
+  }, [])
+
+  // 点击Boss图标（通过 marker tap 触发）
+  const handleBossTap = (bossId: BossType) => {
+    const distance = bossDistances[bossId]
+    if (distance > BOSS_TRIGGER_RADIUS) {
+      Taro.showToast({ title: '距离过远，请靠近后再挑战', icon: 'none' })
+      return
+    }
+    if (isBossOnCooldown(bossId)) {
+      const seconds = Math.ceil((15 * 60 * 1000 - (Date.now() - JSON.parse(Taro.getStorageSync('bossCooldowns') || '{}')[bossId])) / 1000)
+      const mins = Math.floor(seconds / 60)
+      const secs = seconds % 60
+      Taro.showToast({ title: `Boss冷却中，${mins}分${secs}秒后可挑战`, icon: 'none' })
+      return
+    }
+    setActiveBossId(bossId)
+    setShowBossMatch(true)
+  }
+
+  // 开始挑战
+  const handleStartChallenge = () => {
+    setShowBossMatch(false)
+    setShowBossChallenge(true)
+  }
+
+  // 挑战胜利回调
+  const handleBossVictory = (rewards: BossConfig['rewards']) => {
+    if (activeBossId) {
+      setBossDefeated(activeBossId)
+    }
+
+    // 解锁海报并存入本地缓存
+    if (rewards.posterUrl) {
+      const unlockedPosters = Taro.getStorageSync('unlocked_boss_posters') || []
+      // 检查是否已经解锁过，如果没有则添加
+      const isUnlocked = unlockedPosters.some(p => p.id === rewards.posterId)
+      if (!isUnlocked) {
+        unlockedPosters.push({
+          id: rewards.posterId,
+          url: rewards.posterUrl,
+          unlockTime: Date.now()
+        })
+        Taro.setStorageSync('unlocked_boss_posters', unlockedPosters)
+      }
+    }
+
+    setShowBossChallenge(false)
+    setActiveBossId(null)
+    setBossVictoryRewards(rewards)
+    setShowBossVictoryModal(true)
+  }
+
+  // 关闭挑战
+  const handleCloseChallenge = () => {
+    setShowBossChallenge(false)
+    setActiveBossId(null)
+  }
 
   // ========== 羁绊碎片系统 ==========
   // 加载羁绊数据
@@ -1859,21 +2039,38 @@ export default function Checkin() {
   const handleMarkerTap = useCallback((e: any) => {
     const markerId = e.detail.markerId
     const clickedMarker = markers.find(m => m.id === markerId)
-    if (clickedMarker) {
-      // 检查是否满足LBS打卡条件（距离80米内）
+    if (!clickedMarker) return
+
+    // Boss 类型 marker：直接触发挑战流程（实时计算距离，避免闭包陷阱）
+    if (clickedMarker.type === 'boss' && clickedMarker.bossId) {
       const distance = haversineDistance(userLat, userLng, clickedMarker.latitude, clickedMarker.longitude)
-      const canDoCheckin = distance <= 80
-      // 检查该POI是否已打卡
-      const isCheckedIn = checkedInPOIIds.includes(clickedMarker.id)
-      setCanCheckin(canDoCheckin && !isCheckedIn)
-      setIsPOICheckedIn(isCheckedIn)
-      setPreviewPOI(clickedMarker)
-      // 如果是特殊类型，触发金色光晕
-      if (clickedMarker.type === 'spirit_lighthouse' || clickedMarker.type === 'club' || clickedMarker.type === 'arena') {
-        triggerLighthouseEffect()
+      if (distance > BOSS_TRIGGER_RADIUS) {
+        Taro.showToast({ title: '距离过远，请靠近后再挑战', icon: 'none' })
+        return
       }
-      Taro.vibrateShort({ type: 'light' })
+      if (isBossOnCooldown(clickedMarker.bossId)) {
+        const seconds = Math.ceil((15 * 60 * 1000 - (Date.now() - JSON.parse(Taro.getStorageSync('bossCooldowns') || '{}')[clickedMarker.bossId])) / 1000)
+        const mins = Math.floor(seconds / 60)
+        const secs = seconds % 60
+        Taro.showToast({ title: `Boss冷却中，${mins}分${secs}秒后可挑战`, icon: 'none' })
+        return
+      }
+      setActiveBossId(clickedMarker.bossId)
+      setShowBossMatch(true)
+      return
     }
+
+    // 普通 POI 预览逻辑
+    const distance = haversineDistance(userLat, userLng, clickedMarker.latitude, clickedMarker.longitude)
+    const canDoCheckin = distance <= 80
+    const isCheckedIn = checkedInPOIIds.includes(clickedMarker.id)
+    setCanCheckin(canDoCheckin && !isCheckedIn)
+    setIsPOICheckedIn(isCheckedIn)
+    setPreviewPOI(clickedMarker)
+    if (clickedMarker.type === 'spirit_lighthouse' || clickedMarker.type === 'club' || clickedMarker.type === 'arena') {
+      triggerLighthouseEffect()
+    }
+    Taro.vibrateShort({ type: 'light' })
   }, [markers, userLat, userLng, checkedInPOIIds])
 
   // 关闭POI预览卡片
@@ -2355,7 +2552,7 @@ export default function Checkin() {
     type: 'player_footprint'
   }
 
-  const allMarkers = [...markers, heroMarker]
+  const allMarkers = [...markers, heroMarker] as any[]
 
   // 探索范围光圈（多层）- 静态无动画
   const exploreCircles = [
@@ -2533,7 +2730,7 @@ export default function Checkin() {
 
       {/* 3D透视地图 */}
       {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-      {/* @ts-ignore */}
+      {/* @ts-ignore — markers 含 customCallout，Taro 类型定义未覆盖 */}
       <Map
         id='exploreMap'
         className='explore-map'
@@ -2553,12 +2750,40 @@ export default function Checkin() {
         show-location={false}
         enableScroll={!isPetDragging}
         onMarkerTap={handleMarkerTap}
-      />
+        onCalloutTap={handleMarkerTap}
+      >
+        {/* Boss 自定义气泡 — 地图引擎接管坐标，缩放时不再漂移 */}
+        {/* @ts-ignore — slot 为微信小程序原生属性 */}
+        <CoverView slot='callout'>
+          {BOSSES.map((boss, idx) => {
+            if (isBossOnCooldown(boss.id)) return null
+            const distance = bossDistances[boss.id]
+            const isNearby = distance <= BOSS_TRIGGER_RADIUS
+            const gifUrl = isNearby ? bossGifUrls[boss.id]?.attack : bossGifUrls[boss.id]?.idle
+            if (!gifUrl) return null
+            const markerId = 10001 + idx
+            return (
+              <CoverView
+                key={boss.id}
+                {...{ markerId: String(markerId) } as any}
+                className={`boss-callout ${isNearby ? 'boss-callout-nearby' : ''}`}
+                style={{ width: '80px', height: '80px' }}
+              >
+                <CoverImage
+                  className='boss-callout-gif'
+                  src={gifUrl}
+                  style={{ width: '80px', height: '80px' }}
+                />
+              </CoverView>
+            )
+          })}
+        </CoverView>
+      </Map>
 
-      {/* 英雄脚下光效 */}
-      <CoverView className='hero-glow-overlay'>
-        <CoverView className='hero-glow' />
-      </CoverView>
+      {/* 英雄脚下光效 - 使用View组件提高兼容性，保证 pointer-events: none 生效 */}
+      <View className='hero-glow-overlay'>
+        <View className='hero-glow' />
+      </View>
 
       {/* 荣耀灯塔金色光晕 - 使用View组件提高兼容性 */}
       {showGoldenGlow && (
@@ -2870,7 +3095,7 @@ export default function Checkin() {
       )}
 
       {/* 顶部状态栏 - 播放视频、剧情模式、路线卡片或MVP弹窗/海报显示时隐藏 */}
-      {!showAGVideo && !showArenaVideo && !showReportModal && !showPoster && !showStoryDialog && !showStoryRoute && (
+      {!showBossChallenge && !showAGVideo && !showArenaVideo && !showReportModal && !showPoster && !showStoryDialog && !showStoryRoute && (
         <CoverView className='top-status-bar'>
           <CoverView className='bond-progress'>
             <CoverView className='bond-label'>羁绊值 Lv.7</CoverView>
@@ -2882,8 +3107,10 @@ export default function Checkin() {
         </CoverView>
       )}
 
-      {/* AI桌宠 */}
-      <WebPet heroAvatarUrl={heroAvatarUrls[selectedHero] || ''} heroName={selectedHero} onDragStateChange={setIsPetDragging} />
+      {/* AI桌宠：在特定弹窗/挑战/剧情/视频模式下不可见 */}
+      {!showBossChallenge && !showAGVideo && !showArenaVideo && !showReportModal && !showPoster && !showStoryDialog && !showStoryRoute && (
+        <WebPet heroAvatarUrl={heroAvatarUrls[selectedHero] || ''} heroName={selectedHero} onDragStateChange={setIsPetDragging} />
+      )}
 
       {/* 可拖动的模式切换按钮 - 自由/探索 */}
       <View
@@ -2993,7 +3220,7 @@ export default function Checkin() {
                     onClick={() => {
                       Taro.showModal({
                         title: '确认清除',
-                        content: '确定要清除所有打卡记录和羁绊数据吗？\n\n包括：\n• 打卡记录\n• 探索度\n• 背包奖励\n• 羁绊碎片',
+                        content: '确定要清除所有打卡记录和羁绊数据吗？\n\n包括：\n• 打卡记录\n• 探索度\n• 背包奖励\n• 羁绊碎片\n• Boss挑战冷却\n• 解锁的海报',
                         success: (res) => {
                           if (res.confirm) {
                             // 清除羁绊数据
@@ -3006,6 +3233,9 @@ export default function Checkin() {
                             // 清除奖励数据
                             Taro.removeStorageSync('my_rewards')
                             Taro.removeStorageSync('my_badges')
+                            // 清除Boss冷却数据和海报
+                            Taro.removeStorageSync('bossCooldowns')
+                            Taro.removeStorageSync('unlocked_boss_posters')
                             // 重置状态
                             setCollectedFragmentIds([])
                             setHiddenBookmarkUnlocked(false)
@@ -3437,6 +3667,83 @@ export default function Checkin() {
             setQuizPOI(null)
           }}
         />
+      )}
+
+      {/* Boss匹配弹窗 */}
+      {showBossMatch && activeBossId && (
+        <BossMatchModal
+          boss={BOSSES.find(b => b.id === activeBossId)!}
+          onClose={() => {
+            setShowBossMatch(false)
+            setActiveBossId(null)
+          }}
+          onStartChallenge={handleStartChallenge}
+        />
+      )}
+
+      {/* Boss挑战界面 */}
+      {showBossChallenge && activeBossId && (
+        <BossChallenge
+          boss={BOSSES.find(b => b.id === activeBossId)!}
+          onClose={handleCloseChallenge}
+          onVictory={handleBossVictory}
+        />
+      )}
+
+      {/* 挑战胜利后弹出的专属奖励长卡片 */}
+      {showBossVictoryModal && bossVictoryRewards && (
+        <View className='boss-victory-modal-overlay'>
+          <View className='boss-victory-card'>
+            <Text className='boss-victory-title'>🏆 挑战成功！</Text>
+            <Text className='boss-victory-subtitle'>你成功击败了峡谷首领！</Text>
+            
+            <View className='boss-victory-rewards-list'>
+              <View className='boss-victory-reward-item'>
+                <Image className='reward-img-icon' src='cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/勋章兑换卷/英雄碎片.png' mode='aspectFit' />
+                <Text className='reward-text'>英雄碎片</Text>
+                <Text className='reward-num'>+{bossVictoryRewards.heroFragments}</Text>
+              </View>
+              <View className='boss-victory-reward-item'>
+                <Image className='reward-img-icon' src='cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/勋章兑换卷/皮肤碎片.png' mode='aspectFit' />
+                <Text className='reward-text'>皮肤碎片</Text>
+                <Text className='reward-num'>+{bossVictoryRewards.skinFragments}</Text>
+              </View>
+              <View className='boss-victory-reward-item'>
+                <Text className='reward-icon'>💛</Text>
+                <Text className='reward-text'>羁绊值</Text>
+                <Text className='reward-num'>+{bossVictoryRewards.bondValue}</Text>
+              </View>
+              <View className='boss-victory-reward-item'>
+                <Text className='reward-icon'>🖼️</Text>
+                <Text className='reward-text'>限定海报</Text>
+                <View 
+                  className='reward-action-btn'
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (bossVictoryRewards.posterUrl) {
+                      Taro.previewImage({
+                        current: bossVictoryRewards.posterUrl,
+                        urls: [bossVictoryRewards.posterUrl]
+                      })
+                    }
+                  }}
+                >
+                  <Text className='action-text'>预览</Text>
+                </View>
+              </View>
+            </View>
+
+            <View 
+              className='boss-victory-btn' 
+              onClick={() => {
+                setShowBossVictoryModal(false)
+                Taro.showToast({ title: '奖励已放入背包', icon: 'success' })
+              }}
+            >
+              领 取 奖 励
+            </View>
+          </View>
+        </View>
       )}
     </View>
   )

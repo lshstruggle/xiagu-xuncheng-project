@@ -59,15 +59,18 @@ export default function TowerQuizModal({ poiId, poiName, onSuccess, onFail, onCl
     const newAnswers = [...answers, optionIdx]
     setAnswers(newAnswers)
 
+    const newCorrectCount = newAnswers.filter((ans, idx) => ans === questions[idx]?.correctIndex).length
+
     // 延迟后进入下一题或结果页
     setTimeout(() => {
-      if (currentIdx < total - 1) {
+      // 当答对4题（血量归0即可自动判定推塔）或者到了最后一题时，结束答题
+      if (newCorrectCount >= 4 || currentIdx >= total - 1) {
+        setShowResult(true)
+        setIsAnimating(false)
+      } else {
         setCurrentIdx(prev => prev + 1)
         setSelectedOption(null)
         setIsWrong(false)
-        setIsAnimating(false)
-      } else {
-        setShowResult(true)
         setIsAnimating(false)
       }
     }, 1200)
@@ -75,7 +78,12 @@ export default function TowerQuizModal({ poiId, poiName, onSuccess, onFail, onCl
 
   const correctCount = answers.filter((ans, idx) => ans === questions[idx]?.correctIndex).length
   const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0
-  const isPassed = accuracy >= 80
+  const isPassed = correctCount >= 4 // 五道题目答对四道即可成功
+
+  // 计算防御塔剩余血量，总血量100，每答对一题扣25点血，最多扣100血
+  const maxHp = 100
+  const currentHp = Math.max(0, maxHp - correctCount * 25)
+  const hpPercent = (currentHp / maxHp) * 100
 
   const handleResultAction = () => {
     if (isPassed) {
@@ -102,6 +110,18 @@ export default function TowerQuizModal({ poiId, poiName, onSuccess, onFail, onCl
 
   return (
     <View className='quiz-overlay'>
+      {!showResult && (
+        <View className='tower-hp-bar-wrap'>
+          <View className='tower-hp-header'>
+            <Text className='tower-hp-name'>{poiName}防御塔</Text>
+            <Text className='tower-hp-value'>{currentHp} / {maxHp}</Text>
+          </View>
+          <View className='tower-hp-track'>
+            <View className='tower-hp-fill' style={{ width: `${hpPercent}%` }} />
+          </View>
+        </View>
+      )}
+
       <View className='quiz-card'>
         {/* 关闭按钮 */}
         <View className='quiz-close' onClick={onClose}>
@@ -176,11 +196,13 @@ export default function TowerQuizModal({ poiId, poiName, onSuccess, onFail, onCl
               </Text>
             </View>
 
-            <View className='quiz-result-score'>
-              <Text className='quiz-score-num'>{correctCount}</Text>
-              <Text className='quiz-score-total'>/{total}</Text>
-              <Text className='quiz-score-label'>正确率 {accuracy}%</Text>
-            </View>
+            {!isPassed && (
+              <View className='quiz-result-score'>
+                <Text className='quiz-score-num'>{correctCount}</Text>
+                <Text className='quiz-score-total'>/{total}</Text>
+                <Text className='quiz-score-label'>正确率 {accuracy}%</Text>
+              </View>
+            )}
 
             {/* 错题回顾 */}
             {!isPassed && (
