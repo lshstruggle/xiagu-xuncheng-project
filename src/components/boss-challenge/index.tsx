@@ -5,6 +5,7 @@ import './index.scss'
 import type { BossConfig } from '../../config/bosses'
 import { getTempFileURL } from '../../utils/temp-url-cache'
 import { TOWER_QUIZ_BANK } from '../../data/tower-quiz'
+import Match3Compact from '../match3-compact'
 
 interface BossChallengeProps {
   boss: BossConfig
@@ -89,6 +90,29 @@ export default function BossChallenge({ boss, onClose, onVictory }: BossChalleng
     onClose()
   }
 
+  const handleMinigameScoreChange = useCallback((gained: number) => {
+    const damage = Math.max(1, Math.round((gained / 1000) * boss.maxHp))
+    setCurrentHp(prev => {
+      const newHp = Math.max(0, prev - damage)
+      return newHp
+    })
+  }, [boss.maxHp])
+
+  const handleMinigameVictory = useCallback(() => {
+    setCurrentHp(0)
+    setTimeout(() => {
+      setIsVictory(true)
+      setShowResult(true)
+    }, 600)
+  }, [])
+
+  const handleMinigameGameOver = useCallback(() => {
+    setTimeout(() => {
+      setIsVictory(false)
+      setShowResult(true)
+    }, 600)
+  }, [])
+
   const hpPercent = Math.max(0, (currentHp / boss.maxHp) * 100)
 
   return (
@@ -157,10 +181,14 @@ export default function BossChallenge({ boss, onClose, onVictory }: BossChalleng
             )}
           </View>
         ) : (
-          <View className='minigame-placeholder'>
-            <Text className='minigame-icon'>🎮</Text>
-            <Text className='minigame-text'>小游戏模块敬请期待</Text>
-            <Text className='minigame-hint'>即将推出趣味互动玩法</Text>
+          <View className='minigame-panel'>
+            <Match3Compact
+              key={`mg-${boss.id}`}
+              targetScore={1000}
+              onScoreChange={handleMinigameScoreChange}
+              onVictory={handleMinigameVictory}
+              onGameOver={handleMinigameGameOver}
+            />
           </View>
         )}
       </View>

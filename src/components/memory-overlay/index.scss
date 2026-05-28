@@ -665,7 +665,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 120rpx 40rpx 40rpx;
+  padding: 60rpx 40rpx 40rpx;
   overflow-y: auto;
 }
 
@@ -679,7 +679,10 @@
 }
 
 .hidden-merge {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 400rpx;
   height: 400rpx;
 }
@@ -754,19 +757,19 @@
 .hidden-achievement {
   font-size: 40rpx;
   color: #FFD700;
-  margin-bottom: 30rpx;
+  margin-bottom: 12rpx;
   text-shadow: 0 4rpx 12rpx rgba(255, 215, 0, 0.5);
 }
 
 .hidden-title {
   font-size: 36rpx;
   color: #F5E6C8;
-  margin-bottom: 50rpx;
+  margin-bottom: 16rpx;
 }
 
 .hidden-bookmark-area {
-  transform: scale(1.35);
-  margin-bottom: 50rpx;
+  transform: scale(0.85);
+  margin-bottom: 24rpx;
   display: flex;
   justify-content: center;
   align-items: center;

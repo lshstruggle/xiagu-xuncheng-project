@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Taro from '@tarojs/taro'
 import './index.scss'
 import { api } from '../../services/api'
+import FutureBg from '../../components/future-bg'
 import { getTempFileURL } from '../../utils/temp-url-cache'
 
 const GIF_CLICKED = 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/pet/clicked.gif'
@@ -298,6 +299,7 @@ export default function BondSystem() {
 
   return (
     <View className='bond-container'>
+      <FutureBg />
       {/* 1. 顶部英雄切换器 */}
       <ScrollView className='hero-selector' scrollX>
         {heroes.map(hero => (

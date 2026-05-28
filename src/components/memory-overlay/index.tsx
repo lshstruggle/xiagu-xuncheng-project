@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 're
 import Taro from '@tarojs/taro'
 import LongPressBtn from '../long-press-btn'
 import BookmarkCard from '../bookmark-card'
-import { ALL_EASTER_EGGS, HIDDEN_BOOKMARK } from '../../config/bond-traces-chengdu'
+import { ALL_EASTER_EGGS, HIDDEN_BOOKMARK, BOND_TRACES_CHENGDU } from '../../config/bond-traces-chengdu'
 import { playMemoryTTS, stopAudio } from '../../services/tts-player'
 import { api } from '../../services/api'
 import './index.scss'
@@ -367,7 +367,10 @@ function MemoryOverlayComponent({
   const enterBookmarkStage = (newCollectedIds: string[]) => {
     setStage('bookmark')
 
-    if (newCollectedIds.length >= totalCount) {
+    // 隐藏书签只在集齐前4个基础书签后触发，AG彩蛋（5-7号）不触发
+    const baseFragmentIds = BOND_TRACES_CHENGDU.map(t => t.fragmentId)
+    const hasAllBase = baseFragmentIds.every(id => newCollectedIds.includes(id))
+    if (hasAllBase) {
       pendingHidden.current = true
     }
   }

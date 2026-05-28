@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import { getHeroAvatar, heroAvatarFileIDs, getCachedImageByFileID } from '../../../utils/cloud-assets'
 import './index.scss'
+import FutureBg from '../../../components/future-bg'
 
 // 英雄基础数据
 const HEROES_DATA = [
@@ -85,6 +86,7 @@ export default function HeroSelect() {
 
   return (
     <View className='hero-select-container'>
+      <FutureBg />
       {/* 顶部导航 */}
       <View className='nav-bar'>
         <Text className='back-btn' onClick={handleBack}>‹</Text>

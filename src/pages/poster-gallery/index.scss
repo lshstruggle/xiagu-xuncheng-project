@@ -1,8 +1,15 @@
 .poster-gallery-page {
-  min-height: 100vh;
-  background: #12122A;
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   padding: 32px;
   box-sizing: border-box;
+}
+
+.poster-scroll {
+  flex: 1;
+}
 
   .gallery-header {
     margin-bottom: 40px;
@@ -81,4 +88,4 @@
       color: #999;
     }
   }
-}
+

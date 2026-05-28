@@ -1,8 +1,9 @@
 import { View, Text, ScrollView, Image } from '@tarojs/components'
 import { useState, useEffect } from 'react'
-import Taro from '@tarojs/taro'
+import Taro, { getCurrentInstance } from '@tarojs/taro'
 import BookmarkCard from '../../components/bookmark-card'
 import { ALL_EASTER_EGGS, HIDDEN_BOOKMARK } from '../../config/bond-traces-chengdu'
+import FutureBg from '../../components/future-bg'
 import './index.scss'
 
 interface CollectedData {
@@ -52,6 +53,10 @@ export default function CollectionGallery() {
   const [unlockingBadge, setUnlockingBadge] = useState<any>(null)
 
   useEffect(() => {
+    const params = getCurrentInstance().router?.params
+    if (params?.tab === 'badge' || params?.tab === 'bookmark') {
+      setActiveTab(params.tab as 'bookmark' | 'badge')
+    }
     loadData()
   }, [])
 
@@ -186,6 +191,7 @@ export default function CollectionGallery() {
 
   return (
     <View className='collection-page'>
+      <FutureBg />
 
       {/* 顶部标题 */}
       <View className='col-header'>

@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Image } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState, useCallback } from 'react'
 import { REWARD_VISUAL } from '../../config/rewards'
+import FutureBg from '../../components/future-bg'
 import { getTempFileURL } from '../../utils/cloud-storage'
 import './index.scss'
 
@@ -176,6 +177,7 @@ export default function Backpack() {
 
   return (
     <View className='bp-page'>
+      <FutureBg />
       {/* 顶栏 */}
       <View className='bp-header'>
         <View className='bp-back' onClick={goBack}>←</View>

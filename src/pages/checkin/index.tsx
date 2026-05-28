@@ -10,7 +10,9 @@ import MVPPoster from '../../components/mvp-poster'
 import StoryDialog from '../../components/story-dialog'
 import StoryRoute from '../../components/story-route'
 import WebPet from '../../components/web-pet'
+import FutureBg from '../../components/future-bg'
 import TowerQuizModal from '../../components/tower-quiz-modal'
+import TowerMatch3Modal from '../../components/tower-match3-modal'
 import BossMatchModal from '../../components/boss-match-modal'
 import BossChallenge from '../../components/boss-challenge'
 import { ALL_EASTER_EGGS } from '../../config/bond-traces-chengdu'
@@ -555,6 +557,9 @@ export default function Checkin() {
   const [fragData, setFragData] = useState({ hero: 0, skin: 0, isFirst: false })
   const [showTowerQuiz, setShowTowerQuiz] = useState(false)
   const [quizPOI, setQuizPOI] = useState<POIMarker | null>(null)
+  // 小游戏推塔弹窗状态
+  const [showTowerMatch3, setShowTowerMatch3] = useState(false)
+  const [match3POI, setMatch3POI] = useState<POIMarker | null>(null)
   // MVP定时器引用
   const mvpTimerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -2660,7 +2665,7 @@ export default function Checkin() {
     if (nearbyPOI) {
       const poi = nearbyPOI
 
-      // 防御塔需要先答题推塔
+      // 防御塔需要先推塔：成都院子酒店(id=6)走小游戏推塔，其他走答题推塔
       if (poi.type === 'tower') {
         const cooldowns = Taro.getStorageSync('tower_cooldowns') || {}
         const cooldownEnd = cooldowns[String(poi.id)]
@@ -2671,8 +2676,15 @@ export default function Checkin() {
           Taro.showToast({ title: `冷却中，请${mins}分${secs}秒后再试`, icon: 'none' })
           return
         }
-        setQuizPOI(poi)
-        setShowTowerQuiz(true)
+        if (poi.id === 6) {
+          // 成都院子酒店 → 小游戏推塔
+          setMatch3POI(poi)
+          setShowTowerMatch3(true)
+        } else {
+          // 其他防御塔 → 答题推塔
+          setQuizPOI(poi)
+          setShowTowerQuiz(true)
+        }
         return
       }
 
@@ -2709,6 +2721,7 @@ export default function Checkin() {
 
   return (
     <View className='explore-page'>
+      <FutureBg />
       {/* 英雄未选择锁定遮罩 */}
       {!hasSelectedHero && (
         <View className='hero-lock-overlay'>
@@ -3665,6 +3678,27 @@ export default function Checkin() {
           onClose={() => {
             setShowTowerQuiz(false)
             setQuizPOI(null)
+          }}
+        />
+      )}
+
+      {/* 小游戏推塔弹窗 */}
+      {showTowerMatch3 && match3POI && (
+        <TowerMatch3Modal
+          poiId={match3POI.id}
+          poiName={match3POI.title}
+          onSuccess={() => {
+            setShowTowerMatch3(false)
+            doPerformCheckin(match3POI)
+            setMatch3POI(null)
+          }}
+          onFail={() => {
+            setShowTowerMatch3(false)
+            setMatch3POI(null)
+          }}
+          onClose={() => {
+            setShowTowerMatch3(false)
+            setMatch3POI(null)
           }}
         />
       )}
