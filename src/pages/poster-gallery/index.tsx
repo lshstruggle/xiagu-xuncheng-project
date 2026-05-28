@@ -1,6 +1,7 @@
 import { View, Text, Image, ScrollView } from '@tarojs/components'
 import { useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
+import FutureBg from '../../components/future-bg'
 import './index.scss'
 
 interface Poster {
@@ -39,8 +40,10 @@ export default function PosterGallery() {
   }
 
   return (
-    <ScrollView className='poster-gallery-page' scrollY>
-      <View className='gallery-header'>
+    <View className='poster-gallery-page'>
+      <FutureBg />
+      <ScrollView className='poster-scroll' scrollY>
+        <View className='gallery-header'>
         <Text className='gallery-title'>海报储藏室</Text>
         <Text className='gallery-subtitle'>存放你在峡谷探索中收集到的所有海报</Text>
       </View>
@@ -74,6 +77,7 @@ export default function PosterGallery() {
           ))}
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </View>
   )
 }

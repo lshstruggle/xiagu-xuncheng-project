@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import './index.scss'
 import { api } from '../../services/api'
+import FutureBg from '../../components/future-bg'
 import { getTempFileURL } from '../../utils/temp-url-cache'
 
 interface Commodity {
@@ -188,6 +189,7 @@ export default function Shop() {
 
   return (
     <View className='shop-container'>
+      <FutureBg />
       {/* 顶部资产栏 */}
       <View className='sticky-header'>
         <View className='asset-display'>

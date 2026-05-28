@@ -26,7 +26,8 @@ const BOND_TRACES_CHENGDU = [
       quote: '赛场战神，巷子凡人——\n一个怕掏耳朵的凡人。',
       visualDesc: 'Q版风格，竹躺椅上石化的少年剪影，头顶眩晕星星',
       bgColor: '#FFF8E7',
-      accentColor: '#FF9800'
+      accentColor: '#FF9800',
+      uiImage: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/羁绊彩蛋ui/啊——将军.png'
     },
     aiDialogs: {
       li_bai: '宽窄巷子…（忍不住笑了）\n我跟你说件趣事。有一回，几个峡谷里的高手来这里做任务，其中一位，赛场上号称"泰山崩于前而面不改色"。结果被掏了个耳朵——他"啊——"了一嗓子，整条巷子都听见了。\n（大笑）英雄也有可爱的一面。客官要不要也去体验一下？',
@@ -61,7 +62,8 @@ const BOND_TRACES_CHENGDU = [
       quote: '团战只有几秒，\n胜负在于之前\n几个月的心态。',
       visualDesc: '方桌上四只盖碗茶，热气袅袅，折扇上有战术线条',
       bgColor: '#F1F8E9',
-      accentColor: '#689F38'
+      accentColor: '#689F38',
+      uiImage: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/羁绊彩蛋ui/茶馆军师.jpg'
     },
     aiDialogs: {
       li_bai: '这附近…（放慢脚步）\n我记得有位军师，常在这种茶馆中运筹帷幄。不是排兵布阵，而是端着茶，和他的弟子们聊心境。他说："急不得。"后来他的弟子们捧杯的那天，终于懂了这两个字的分量。\n客官，来，饮一杯。',
@@ -142,7 +144,8 @@ const BOND_TRACES_CHENGDU = [
       quote: '不是不怕输，\n只是更怕\n不敢拼。',
       visualDesc: '俯瞰银色灯海如银河，舞台中央少年剪影双拳高举，金色彩带飘落',
       bgColor: '#0D1B2A',
-      accentColor: '#FFD700'
+      accentColor: '#FFD700',
+      uiImage: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/羁绊彩蛋ui/银色灯海.png'
     },
     aiDialogs: {
       li_bai: '前方那个方向…（声音低沉下来）\n我记得那个夜晚。银色的灯海从看台蔓延到场外，像整座城市都在为峡谷中的战斗呐喊。决胜局，年轻的打野压上了一切——他赌赢了。\n他站起来的时候，手在发抖。不是害怕，是太想赢了。\n你今天走了这么远，也是因为有太想做到的事吧？',
@@ -182,7 +185,8 @@ const AG_EASTER_EGGS = [
       quote: '心怀荣耀，\n勇往直前。',
       visualDesc: '红色AG队徽在金色光芒中闪耀，背景是捧杯剪影',
       bgColor: '#FFEBEE',
-      accentColor: '#E53935'
+      accentColor: '#E53935',
+      uiImage: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/羁绊彩蛋ui/心怀荣耀.jpg'
     },
     aiDialogs: {
       li_bai: '心怀荣耀，勇往直前！\n这是成都AG超玩会的誓言，也是我今天送给你的第一句话。\n2019年，他们曾跌入谷底，被嘲笑为千年老二。可2023年的那个秋天，他们在挑战者杯决赛的舞台上，用实力告诉所有人：AG，回来了！\n从被喷上热搜第一，到捧起冠军奖杯，Cat用了整整五年。他说：就这一刻，我感觉一切都是值得的。\n少年，你的路或许也难，但请记住AG的故事，只要心怀荣耀，便永远有勇往直前的力量！',
@@ -237,7 +241,8 @@ const AG_EASTER_EGGS = [
       quote: '你可以不成功，\n但不能不成长。',
       visualDesc: '少年持弓而立，从激进到沉稳的蜕变剪影',
       bgColor: '#FFF3E0',
-      accentColor: '#FB8C00'
+      accentColor: '#FB8C00',
+      uiImage: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/羁绊彩蛋ui/一诺千金.jpg'
     },
     aiDialogs: {
       li_bai: '成都最繁华的街头，走来一位意气风发的少年。\n这让我想起AG的一诺，徐必成，那个从激进射手成长为团队核心的少年。\n他说：你可以不成功，但不能不成长，谁也不能阻止你成长。\n从被质疑到被仰望，从个人秀到团队魂，他的每一次走位调整，都藏在数千次训练赛的汗水里。\n少年，成长从来不是一蹴而就，但只要不停下脚步，你终将成为自己想成为的人。',
@@ -295,7 +300,8 @@ const AG_EASTER_EGGS = [
       quote: '意生意世，\n打法绑定，\n天下无敌。',
       visualDesc: '两人背靠背站立，一人持剑一人持扇，气势如虹',
       bgColor: '#FFF8E1',
-      accentColor: '#FFD700'
+      accentColor: '#FFD700',
+      uiImage: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/羁绊彩蛋ui/意生意世.png'
     },
     aiDialogs: {
       li_bai: '妙哉！妙哉！你二人竟在同一时辰路过此地！\n这让我想起AG的意生意世组合，长生与钟意。\n2023年，钟意从狼队转会而来，与长生立下誓言：要成为联盟最强中野，携手为AG捧起冠军奖杯。\n长生的沉稳，钟意的凶猛，完美互补，天衣无缝。2024年低谷，他们并肩熬过；2025年春决，他们共同捧起奖杯；EWC世界杯绝境，他们联手完成惊天逆转！\n这就是羁绊的力量，一个人可以走得快，但两个人才能走得远。',
@@ -338,7 +344,8 @@ const HIDDEN_BOOKMARK = {
   bookmarkData: {
     title: '这座城，记住了',
     quote: '你走过的路，\n他们也走过。\n从此以后，\n这座城市的故事里，\n也有你了。',
-    visualDesc: '成都鸟瞰，4个故事元素拼成城市剪影，银龙盘旋其上'
+    visualDesc: '成都鸟瞰，4个故事元素拼成城市剪影，银龙盘旋其上',
+    uiImage: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/羁绊彩蛋ui/这座城，记住了.png'
   },
   unlockCondition: '集齐成都全部4张羁绊书签'
 }

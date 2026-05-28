@@ -5,6 +5,7 @@ import type { StoryLine } from '../../../types/story'
 import { getStoryByHero, startStory, setExploreMode } from '../../../services/story'
 import { getTempFileURL } from '../../../utils/temp-url-cache'
 import { resetFreeModeWelcome } from '../../../data/free-mode-welcome'
+import FutureBg from '../../../components/future-bg'
 import './index.scss'
 
 const MODE_ICON_FREE = 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/模式选择ui/自由探索模式-removebg-preview.png'
@@ -105,6 +106,7 @@ export default function StoryModeSelect() {
 
   return (
     <View className='sms-page'>
+      <FutureBg />
       {/* 顶部金线 */}
       <View className='sms-top-line' />
 

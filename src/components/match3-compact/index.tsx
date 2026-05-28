@@ -1,22 +1,17 @@
-import { View, Text, Image, Button } from '@tarojs/components'
+import { View, Text, Image } from '@tarojs/components'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Taro from '@tarojs/taro'
-import FutureBg from '../../components/future-bg'
 import {
   MATCH3_TILE_KEYS,
   MATCH3_TILE_COLORS,
   MATCH3_TILE_LABELS,
   preloadMatch3Assets,
   type Match3TileKey,
-  type Match3UiKey,
 } from '../../utils/match3-assets'
 import {
   GRID_SIZE,
   INITIAL_MOVES,
-  TARGET_SCORE,
-  CELL_STEP_RPX,
-  cellLeftRpx,
-  cellTopRpx,
+  SCORE_PER_TILE,
   createGrid,
   findMatches,
   clearMatches,
@@ -24,7 +19,6 @@ import {
   applyGravity,
   fillEmptyWithSpawns,
   attemptSwap,
-  SCORE_PER_TILE,
   hasValidMove,
   shuffleGrid,
   findHint,
@@ -34,19 +28,12 @@ import {
   type GravityMove,
   type SpawnTile,
 } from '../../utils/match3-engine'
-import {
-  buildClearEffects,
-  type ClearEffects,
-} from '../../utils/match3-effects'
+import { buildClearEffects, type ClearEffects } from '../../utils/match3-effects'
 import { safeVibrateShort } from '../../utils/safe-vibrate'
 import './index.scss'
 
-function formatErr(err: unknown): string {
-  if (!err) return 'unknown'
-  if (typeof err === 'string') return err
-  const e = err as { errMsg?: string; message?: string }
-  return e.errMsg || e.message || JSON.stringify(err)
-}
+const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
+const DRAG_THRESHOLD_PX = 24
 
 const EMPTY_EFFECTS: ClearEffects = {
   rings: [],
@@ -57,13 +44,6 @@ const EMPTY_EFFECTS: ClearEffects = {
   shakeBoard: false,
 }
 
-type GameStatus = 'playing' | 'won' | 'lost'
-
-const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
-
-/** 拖动超过该像素（px）才判定为交换方向 */
-const DRAG_THRESHOLD_PX = 28
-
 interface DragState {
   row: number
   col: number
@@ -73,19 +53,31 @@ interface DragState {
   offsetY: number
 }
 
-export default function Match3Game() {
+interface Match3CompactProps {
+  targetScore?: number
+  initialMoves?: number
+  onScoreChange?: (gained: number, total: number) => void
+  onVictory?: () => void
+  onGameOver?: () => void
+}
+
+export default function Match3Compact({
+  targetScore = 1000,
+  initialMoves = INITIAL_MOVES,
+  onScoreChange,
+  onVictory,
+  onGameOver,
+}: Match3CompactProps) {
   const [displayGrid, setDisplayGrid] = useState<Grid>(() => createGrid())
   const [score, setScore] = useState(0)
-  const [movesLeft, setMovesLeft] = useState(INITIAL_MOVES)
+  const [movesLeft, setMovesLeft] = useState(initialMoves)
   const [hintCells, setHintCells] = useState<Position[]>([])
   const [comboText, setComboText] = useState('')
-  const [status, setStatus] = useState<GameStatus>('playing')
+  const [status, setStatus] = useState<'playing' | 'won' | 'lost'>('playing')
   const [busy, setBusy] = useState(false)
   const [tileUrls, setTileUrls] = useState<Record<Match3TileKey, string>>(
     {} as Record<Match3TileKey, string>
   )
-  const [uiUrls, setUiUrls] = useState<Partial<Record<Match3UiKey, string>>>({})
-
   const [clearingCells, setClearingCells] = useState<Set<string>>(new Set())
   const [fallMoves, setFallMoves] = useState<GravityMove[] | null>(null)
   const [fallDropping, setFallDropping] = useState(false)
@@ -102,17 +94,13 @@ export default function Match3Game() {
   const [scorePulse, setScorePulse] = useState(false)
 
   const gridRef = useRef(displayGrid)
-  const fxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const busyRef = useRef(false)
+  const fxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    Taro.setNavigationBarTitle({ title: '王者消消乐' })
     preloadMatch3Assets()
-      .then(({ tiles, ui }) => {
-        setTileUrls(tiles)
-        setUiUrls(ui)
-      })
-      .catch((err) => console.warn('[match3] 资源预加载失败:', formatErr(err)))
+      .then(({ tiles }) => setTileUrls(tiles))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -131,7 +119,7 @@ export default function Match3Game() {
 
   const triggerClearFx = useCallback((matched: Set<string>, grid: Grid, combo: number) => {
     if (fxTimerRef.current) clearTimeout(fxTimerRef.current)
-    const fx = buildClearEffects(matched, grid, combo)
+    const fx = buildClearEffects(matched, grid, combo, SCALE)
     setClearFx(fx)
     setScorePulse(true)
     setTimeout(() => setScorePulse(false), 400)
@@ -147,16 +135,22 @@ export default function Match3Game() {
     setTimeout(() => setComboText(''), 1200)
   }, [])
 
-  const checkEnd = useCallback((newScore: number, newMoves: number) => {
-    if (newScore >= TARGET_SCORE) {
-      setStatus('won')
-      safeVibrateShort('heavy')
-      return
-    }
-    if (newMoves <= 0) setStatus('lost')
-  }, [])
+  const checkEnd = useCallback(
+    (newScore: number, newMoves: number) => {
+      if (newScore >= targetScore) {
+        setStatus('won')
+        safeVibrateShort('heavy')
+        onVictory?.()
+        return
+      }
+      if (newMoves <= 0) {
+        setStatus('lost')
+        onGameOver?.()
+      }
+    },
+    [targetScore, onVictory, onGameOver]
+  )
 
-  /** 分步播放：消除 → 下落 → 填充 → 再检测连锁 */
   const playMatchSequence = useCallback(
     async (startGrid: Grid, movesAfterSwap: number) => {
       let current = startGrid
@@ -171,13 +165,10 @@ export default function Match3Game() {
         cascadeSteps++
         totalGained += matched.size * SCORE_PER_TILE * combo
 
-        // 1. 消除特效 + 动画
         triggerClearFx(matched, current, combo)
-        if (matched.size >= 5) {
-          safeVibrateShort('medium')
-        } else {
-          safeVibrateShort('light')
-        }
+        if (matched.size >= 5) safeVibrateShort('medium')
+        else safeVibrateShort('light')
+
         setClearingCells(new Set(matched))
         await delay(300)
         setClearingCells(new Set())
@@ -189,7 +180,6 @@ export default function Match3Game() {
         gridRef.current = cleared
         await delay(40)
 
-        // 2. 下落动画
         const moves = computeGravityMoves(cleared)
         if (moves.length > 0) {
           setFallDropping(false)
@@ -206,7 +196,6 @@ export default function Match3Game() {
         gridRef.current = afterGravity
         await delay(40)
 
-        // 3. 顶部生成并下落
         const { grid: filled, spawns } = fillEmptyWithSpawns(afterGravity)
         if (spawns.length > 0) {
           setSpawnDropping(false)
@@ -232,6 +221,9 @@ export default function Match3Game() {
       setScore((s) => {
         const next = s + totalGained
         checkEnd(next, movesAfterSwap)
+        if (onScoreChange && totalGained > 0) {
+          onScoreChange(totalGained, next)
+        }
         return next
       })
 
@@ -242,7 +234,7 @@ export default function Match3Game() {
         Taro.showToast({ title: '已重新排列', icon: 'none', duration: 1200 })
       }
     },
-    [showCombo, checkEnd, triggerClearFx]
+    [checkEnd, onScoreChange, triggerClearFx, showCombo]
   )
 
   const runPlayerMove = useCallback(
@@ -330,7 +322,6 @@ export default function Match3Game() {
     const from: Position = { row: drag.row, col: drag.col }
     const target = getDragTarget(drag)
     setDrag(null)
-
     if (target && isAdjacent(from, target)) {
       await runPlayerMove(from, target)
     }
@@ -340,10 +331,10 @@ export default function Match3Game() {
     setDisplayGrid(createGrid())
     gridRef.current = createGrid()
     setScore(0)
-    setMovesLeft(INITIAL_MOVES)
+    setMovesLeft(initialMoves)
     setHintCells([])
-    setStatus('playing')
     setComboText('')
+    setStatus('playing')
     setBusy(false)
     busyRef.current = false
     setClearingCells(new Set())
@@ -374,7 +365,16 @@ export default function Match3Game() {
 
   const gridForRender = swapAnim ? swapAnim.grid : displayGrid
 
-  /** 计算单格显示（含下落/生成/拖动/交换动画） */
+  // 紧凑版尺寸：原尺寸乘以 0.82 比例（棋盘更大）
+  const SCALE = 0.82
+  const cSize = Math.round(76 * SCALE)
+  const cGap = Math.round(6 * SCALE)
+  const cPad = Math.round(12 * SCALE)
+  const cStep = cSize + cGap
+
+  const cLeft = (col: number) => cPad + col * cStep
+  const cTop = (row: number) => cPad + row * cStep
+
   const resolveCell = (r: number, c: number) => {
     const key = `${r},${c}`
     let type: number | null = null
@@ -384,7 +384,6 @@ export default function Match3Game() {
     let zIndex = 1
     let hidden = false
 
-    // 拖动中
     if (drag && drag.row === r && drag.col === c) {
       type = gridForRender[r][c]
       if (type < 0) hidden = true
@@ -396,44 +395,32 @@ export default function Match3Game() {
       return { type, transform, transition, opacity, zIndex, hidden, clearing: false }
     }
 
-    // 交换动画：两格互换位移
     if (swapAnim) {
       const { a, b } = swapAnim
       if (r === a.row && c === a.col) {
         type = swapAnim.grid[a.row][a.col]
         const dr = b.row - a.row
         const dc = b.col - a.col
-        transform = swapAnim.revert
-          ? `translate(${dc * CELL_STEP_RPX}rpx, ${dr * CELL_STEP_RPX}rpx)`
-          : `translate(${dc * CELL_STEP_RPX}rpx, ${dr * CELL_STEP_RPX}rpx)`
+        transform = `translate(${dc * cStep}rpx, ${dr * cStep}rpx)`
         zIndex = 15
       } else if (r === b.row && c === b.col) {
         type = swapAnim.grid[b.row][b.col]
         const dr = a.row - b.row
         const dc = a.col - b.col
-        transform = `translate(${dc * CELL_STEP_RPX}rpx, ${dr * CELL_STEP_RPX}rpx)`
+        transform = `translate(${dc * cStep}rpx, ${dr * cStep}rpx)`
         zIndex = 15
       } else {
         type = gridForRender[r][c]
       }
       if (type !== null && type < 0) hidden = true
-      return {
-        type,
-        transform,
-        transition: 'transform 0.16s ease-out',
-        opacity,
-        zIndex,
-        hidden,
-        clearing: false,
-      }
+      return { type, transform, transition: 'transform 0.16s ease-out', opacity, zIndex, hidden, clearing: false }
     }
 
-    // 下落动画：仍在原行，向下平移
     if (fallMoves && fallMoves.length > 0) {
       const move = fallMoves.find((m) => m.fromRow === r && m.col === c)
       if (move) {
         type = move.type
-        const dy = (move.toRow - move.fromRow) * CELL_STEP_RPX
+        const dy = (move.toRow - move.fromRow) * cStep
         transform = fallDropping ? `translateY(${dy}rpx)` : 'translateY(0)'
         zIndex = 10
         return { type, transform, transition, opacity, zIndex, hidden: false, clearing: false }
@@ -445,39 +432,20 @@ export default function Match3Game() {
       }
     }
 
-    // 顶部生成：从上方落入
     if (spawnTiles && spawnTiles.length > 0) {
       const spawn = spawnTiles.find((s) => s.row === r && s.col === c)
       if (spawn) {
         type = spawn.type
-        const dy = spawn.dropDistance * CELL_STEP_RPX
+        const dy = spawn.dropDistance * cStep
         transform = spawnDropping ? 'translateY(0)' : `translateY(-${dy}rpx)`
-        return {
-          type,
-          transform,
-          transition: 'transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1)',
-          opacity: 1,
-          zIndex: 12,
-          hidden: false,
-          clearing: false,
-        }
+        return { type, transform, transition: 'transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1)', opacity: 1, zIndex: 12, hidden: false, clearing: false }
       }
     }
 
     type = gridForRender[r][c]
     if (type < 0) hidden = true
-
     const isClearing = clearingCells.has(key)
-
-    return {
-      type,
-      transform,
-      transition,
-      opacity,
-      zIndex,
-      hidden,
-      clearing: isClearing,
-    }
+    return { type, transform, transition, opacity, zIndex, hidden, clearing: isClearing }
   }
 
   const renderTile = (r: number, c: number) => {
@@ -490,112 +458,98 @@ export default function Match3Game() {
     const fallbackColor = tileKey ? MATCH3_TILE_COLORS[tileKey] : '#555'
     const label = tileKey ? MATCH3_TILE_LABELS[tileKey] : '?'
     const isHint = hintCells.some((h) => h.row === r && h.col === c)
+    const tileKeyForFx = MATCH3_TILE_KEYS[cell.type] as Match3TileKey | undefined
+    const glowColor = tileKeyForFx ? MATCH3_TILE_COLORS[tileKeyForFx] : '#f5c518'
 
     const style: Record<string, string | number> = {
-      left: `${cellLeftRpx(c)}rpx`,
-      top: `${cellTopRpx(r)}rpx`,
+      left: `${cLeft(c)}rpx`,
+      top: `${cTop(r)}rpx`,
+      width: `${cSize}rpx`,
+      height: `${cSize}rpx`,
       transform: cell.transform,
       transition: cell.transition,
       opacity: cell.clearing ? 0 : cell.opacity,
       zIndex: cell.zIndex,
+      ...(cell.clearing
+        ? { boxShadow: `0 0 32rpx ${glowColor}, 0 0 12rpx #fff` }
+        : {}),
     }
-
-    // 生成块：挂载后下一帧落到 0
-    const tileKeyForFx = MATCH3_TILE_KEYS[cell.type] as Match3TileKey | undefined
-    const glowColor = tileKeyForFx ? MATCH3_TILE_COLORS[tileKeyForFx] : '#f5c518'
 
     return (
       <View
         key={`tile-${r}-${c}`}
         className={[
-          'cell',
-          cell.clearing ? 'cell--clearing' : '',
-          cell.clearing ? 'cell--clearing-burst' : '',
-          isHint ? 'cell--hint' : '',
-          drag && drag.row === r && drag.col === c ? 'cell--dragging' : '',
-          busy ? 'cell--locked' : '',
+          'mc-cell',
+          cell.clearing ? 'mc-cell--clearing' : '',
+          cell.clearing ? 'mc-cell--clearing-burst' : '',
+          isHint ? 'mc-cell--hint' : '',
+          drag && drag.row === r && drag.col === c ? 'mc-cell--dragging' : '',
+          busy ? 'mc-cell--locked' : '',
         ]
           .filter(Boolean)
           .join(' ')}
-        style={{
-          ...style,
-          ...(cell.clearing
-            ? { boxShadow: `0 0 32rpx ${glowColor}, 0 0 12rpx #fff` }
-            : {}),
-        }}
+        style={style}
         onTouchStart={(e) => onCellTouchStart(r, c, e)}
         onTouchMove={onCellTouchMove}
         onTouchEnd={onCellTouchEnd}
         onTouchCancel={onCellTouchEnd}
       >
         {showImg ? (
-          <Image className='cell-img' src={imgUrl} mode='aspectFit' />
+          <Image className='mc-cell-img' src={imgUrl} mode='aspectFit' />
         ) : (
-          <View
-            className='cell-fallback'
-            style={{ backgroundColor: fallbackColor }}
-          >
-            <Text className='cell-fallback-text'>{label.slice(0, 1)}</Text>
+          <View className='mc-cell-fallback' style={{ backgroundColor: fallbackColor }}>
+            <Text className='mc-cell-fallback-text'>{label.slice(0, 1)}</Text>
           </View>
         )}
       </View>
     )
   }
 
+  const boardSize = cPad * 2 + GRID_SIZE * cSize + (GRID_SIZE - 1) * cGap
+
   return (
-    <View className='match3-page'>
-      <FutureBg />
-      <View className='match3-header'>
-        <View className='stat-block'>
-          {uiUrls.scoreIcon && !uiUrls.scoreIcon.startsWith('data:image') ? (
-            <Image className='stat-icon' src={uiUrls.scoreIcon} mode='aspectFit' />
-          ) : (
-            <Text className='stat-emoji'>⭐</Text>
-          )}
-          <View className='stat-info'>
-            <Text className='stat-label'>得分</Text>
-            <Text className={`stat-value ${scorePulse ? 'stat-value--pulse' : ''}`}>
-              {score}
-            </Text>
-          </View>
+    <View className='match3-compact'>
+      {/* 左侧信息栏 */}
+      <View className='mc-left-panel'>
+        <View className='mc-stat-item'>
+          <Text className='mc-stat-label'>得分</Text>
+          <Text className={`mc-stat-value ${scorePulse ? 'mc-stat-value--pulse' : ''} ${score >= targetScore * 0.8 ? 'mc-stat-value--gold' : ''}`}>
+            {score}
+          </Text>
+          <Text className='mc-stat-target'>/{targetScore}</Text>
         </View>
-        <View className='stat-block stat-block--center'>
-          <Text className='stat-label'>目标</Text>
-          <Text className='stat-value stat-value--gold'>{TARGET_SCORE}</Text>
-        </View>
-        <View className='stat-block stat-block--right'>
-          <Text className='stat-label'>步数</Text>
-          <Text
-            className={`stat-value ${movesLeft <= 5 ? 'stat-value--warn' : ''}`}
-          >
+        <View className='mc-stat-item'>
+          <Text className='mc-stat-label'>步数</Text>
+          <Text className={`mc-stat-value ${movesLeft <= 5 ? 'mc-stat-value--warn' : ''}`}>
             {movesLeft}
           </Text>
         </View>
+        <View className='mc-progress-track'>
+          <View
+            className='mc-progress-fill'
+            style={{ width: `${Math.min(100, (score / targetScore) * 100)}%` }}
+          />
+        </View>
+        <View className='mc-combo-slot'>
+          {comboText ? (
+            <Text className='mc-combo-text'>{comboText}</Text>
+          ) : null}
+        </View>
       </View>
 
-      {/* 固定高度占位，避免连击文字出现/消失导致棋盘跳动 */}
-      <View className='combo-slot'>
-        {comboText ? (
-          <Text className='combo-text'>{comboText}</Text>
-        ) : null}
-      </View>
-
-      <View className='board-wrap'>
-        <View
-          className={`board ${clearFx.shakeBoard ? 'board--shake' : ''}`}
-          catchMove
-        >
-          {clearFx.showFlash && <View className='board-flash' />}
-          <View className='board-grid' catchMove>
-            {Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) =>
-              renderTile(Math.floor(i / GRID_SIZE), i % GRID_SIZE)
-            )}
-          </View>
-          <View className='fx-layer'>
+      {/* 中间棋盘 */}
+      <View className='mc-board-wrap'>
+        <View className={`mc-board ${clearFx.shakeBoard ? 'mc-board--shake' : ''}`} style={{ width: `${boardSize}rpx`, height: `${boardSize}rpx` }}>
+          {clearFx.showFlash && <View className='mc-board-flash' />}
+          {Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) =>
+            renderTile(Math.floor(i / GRID_SIZE), i % GRID_SIZE)
+          )}
+          {/* 特效层 */}
+          <View className='mc-fx-layer'>
             {clearFx.rings.map((ring) => (
               <View
                 key={ring.id}
-                className={`fx-ring ${ring.big ? 'fx-ring--big' : ''}`}
+                className={`mc-fx-ring ${ring.big ? 'mc-fx-ring--big' : ''}`}
                 style={{
                   left: `${ring.left}rpx`,
                   top: `${ring.top}rpx`,
@@ -607,7 +561,7 @@ export default function Match3Game() {
             {clearFx.particles.map((p) => (
               <View
                 key={p.id}
-                className={`fx-particle fx-particle--dir-${p.dir}`}
+                className={`mc-fx-particle mc-fx-particle--dir-${p.dir}`}
                 style={{
                   left: `${p.left}rpx`,
                   top: `${p.top}rpx`,
@@ -618,7 +572,7 @@ export default function Match3Game() {
             {clearFx.stars.map((s) => (
               <Text
                 key={s.id}
-                className='fx-star'
+                className='mc-fx-star'
                 style={{ left: `${s.left}rpx`, top: `${s.top}rpx` }}
               >
                 {s.char}
@@ -627,7 +581,7 @@ export default function Match3Game() {
             {clearFx.popups.map((p) => (
               <Text
                 key={p.id}
-                className={`fx-popup ${p.combo > 1 ? 'fx-popup--combo' : ''}`}
+                className={`mc-fx-popup ${p.combo > 1 ? 'mc-fx-popup--combo' : ''}`}
                 style={{ left: `${p.left}rpx`, top: `${p.top}rpx` }}
               >
                 {p.text}
@@ -637,42 +591,15 @@ export default function Match3Game() {
         </View>
       </View>
 
-      <View className='action-bar'>
-        <Button className='action-btn action-btn--hint' onClick={handleHint}>
-          {uiUrls.btnHint && !uiUrls.btnHint.startsWith('data:image') ? (
-            <Image className='action-btn-img' src={uiUrls.btnHint} mode='aspectFit' />
-          ) : (
-            <Text className='action-btn-text'>💡 提示</Text>
-          )}
-        </Button>
-        <Button className='action-btn action-btn--restart' onClick={handleRestart}>
-          {uiUrls.btnRestart && !uiUrls.btnRestart.startsWith('data:image') ? (
-            <Image
-              className='action-btn-img'
-              src={uiUrls.btnRestart}
-              mode='aspectFit'
-            />
-          ) : (
-            <Text className='action-btn-text'>🔄 重来</Text>
-          )}
-        </Button>
-      </View>
-
-      <Text className='hint-tip'>拖动图标与相邻格子交换，三个及以上连线即可消除</Text>
-
-      {status !== 'playing' && (
-        <View className='modal-mask'>
-          <View className='modal-panel'>
-            <Text className='modal-title'>
-              {status === 'won' ? '🏆 挑战成功！' : '⏳ 步数用尽'}
-            </Text>
-            <Text className='modal-score'>最终得分：{score}</Text>
-            <Button className='modal-btn' onClick={handleRestart}>
-              再来一局
-            </Button>
-          </View>
+      {/* 右侧按钮栏 */}
+      <View className='mc-right-panel'>
+        <View className='mc-circle-btn mc-circle-btn--hint' onClick={handleHint}>
+          <Text className='mc-circle-icon'>💡</Text>
         </View>
-      )}
+        <View className='mc-circle-btn mc-circle-btn--restart' onClick={handleRestart}>
+          <Text className='mc-circle-icon'>🔄</Text>
+        </View>
+      </View>
     </View>
   )
 }

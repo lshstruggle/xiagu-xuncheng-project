@@ -1,7 +1,6 @@
 page {
   height: 100vh;
   overflow: hidden;
-  background-color: #1A1A2E;
 }
 
 .explore-page {
@@ -9,7 +8,6 @@ page {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #1A1A2E;
 }
 
 /* 地图全屏 */
@@ -895,7 +893,7 @@ page {
 /* 底部弧形工具栏 */
 .bottom-toolbar {
   position: fixed;
-  bottom: 0px;
+  bottom: -4px;
   left: 0;
   right: 0;
   height: 110px;

@@ -1,4 +1,5 @@
 import { View, Text, Image } from '@tarojs/components'
+
 import './index.scss'
 
 interface BookmarkData {
@@ -7,6 +8,7 @@ interface BookmarkData {
   visualDesc?: string
   bgColor?: string
   accentColor?: string
+  uiImage?: string
 }
 
 interface BookmarkCardProps {
@@ -59,11 +61,15 @@ export default function BookmarkCard({
           {/* 稀有度光效 */}
           <View className={`rarity-glow rarity-glow-${rarity}`}></View>
           
-          {/* 占位插画区 */}
-          <View className='visual-placeholder'>
-            <Text className='visual-emoji'>{getEmoji()}</Text>
-            <Text className='visual-title'>{data.title}</Text>
-          </View>
+          {/* 插画区 */}
+          {data.uiImage ? (
+            <Image className='bookmark-ui-image' src={data.uiImage} mode='aspectFill' />
+          ) : (
+            <View className='visual-placeholder'>
+              <Text className='visual-emoji'>{getEmoji()}</Text>
+              <Text className='visual-title'>{data.title}</Text>
+            </View>
+          )}
         </View>
 
         {/* 金色分割线 */}
