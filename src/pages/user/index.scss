@@ -1,8 +1,14 @@
 .user-page {
-  background-color: #1A1A2E;
-  min-height: 100vh;
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   padding: 0 32px;
   box-sizing: border-box;
+}
+
+.user-scroll {
+  flex: 1;
 }
 
 .loading {

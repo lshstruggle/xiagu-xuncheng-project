@@ -1,8 +1,8 @@
 /* pages/backpack/index.scss */
 
 .bp-page {
+  position: relative;
   min-height: 100vh;
-  background: linear-gradient(180deg, #1a1e2e 0%, #111422 100%);
   display: flex;
   flex-direction: column;
 }

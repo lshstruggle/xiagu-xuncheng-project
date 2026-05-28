@@ -1,5 +1,5 @@
 .bond-container {
-  background-color: #1A1A2E;
+  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -11,7 +11,6 @@
 .hero-selector {
   white-space: nowrap;
   padding: 24px 0;
-  background-color: #1A1A2E;
 }
 
 .hero-avatar-wrap {
@@ -85,6 +84,12 @@
   margin-bottom: 20px;
 }
 
+.dashboard-level-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
 .level-badge {
   background-color: #F5C518;
   border-radius: 12px;
@@ -95,6 +100,12 @@
   font-size: 28px;
   color: #1A1A2E;
   font-weight: bold;
+}
+
+.dashboard-proficiency-icon {
+  width: 52px;
+  height: 52px;
+  margin-left: 14px;
 }
 
 .bond-value-current {
@@ -265,10 +276,19 @@
   margin-bottom: 8px;
 }
 
+.node-title-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+  margin-right: 16px;
+}
+
 .node-title {
   font-size: 32px;
   color: #FFFFFF;
   font-weight: bold;
+  flex-shrink: 0;
 }
 
 .node-level-tag {
@@ -276,6 +296,14 @@
   color: rgba(255, 255, 255, 0.4);
   font-weight: normal;
   margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.proficiency-icon {
+  width: 48px;
+  height: 48px;
+  margin-left: 10px;
+  flex-shrink: 0;
 }
 
 .node-status {

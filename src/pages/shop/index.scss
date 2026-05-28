@@ -1,5 +1,5 @@
 .shop-container {
-  background-color: #1A1A2E;
+  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -9,7 +9,6 @@
 
 /* --- 顶部粘性资产栏 --- */
 .sticky-header {
-  background-color: #1A1A2E;
   padding: 20px 0 0;
   position: sticky;
   top: 0;

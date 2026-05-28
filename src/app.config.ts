@@ -8,7 +8,8 @@ export default defineAppConfig({
     'pages/bookmark-gallery/index',
     'pages/backpack/index',
     'pages/shop/index',
-    'pages/bond-system/index'
+    'pages/bond-system/index',
+    'pages/poster-gallery/index'
   ],
   // 分包配置
   subPackages: [

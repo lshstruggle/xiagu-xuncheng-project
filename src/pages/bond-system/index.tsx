@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Taro from '@tarojs/taro'
 import './index.scss'
 import { api } from '../../services/api'
+import FutureBg from '../../components/future-bg'
 import { getTempFileURL } from '../../utils/temp-url-cache'
 
 const GIF_CLICKED = 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/图片素材/pet/clicked.gif'
@@ -49,6 +50,20 @@ const HOW_TO_GAIN: HowToGainItem[] = [
   { icon: '🗺️', title: '完成路线', desc: '走完一条完整探索路线', value: '+20' }
 ]
 
+// 熟练度图标云存储路径（见习→神话共8个，Lv.7和Lv.9留空）
+const PROFICIENCY_ICONS: Record<number, string> = {
+  1: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/熟练度/见习-小号.png',
+  2: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/熟练度/资深-小号.png',
+  3: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/熟练度/精英-小号.png',
+  4: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/熟练度/宗师-小号.png',
+  5: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/熟练度/超凡-小号.png',
+  6: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/熟练度/巅峰-小号.png',
+  // 7: 留空
+  8: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/熟练度/传说-小号.png',
+  // 9: 留空
+  10: 'cloud://xiagu-miniprogram-d7dbpz54358b2f.7869-xiagu-miniprogram-d7dbpz54358b2f-1410097615/熟练度/神话-小号.png',
+}
+
 // 羁绊里程碑节点配置（Lv.1~10）
 interface MilestoneNode {
   level: number
@@ -79,6 +94,9 @@ export default function BondSystem() {
   const [animatedBond, setAnimatedBond] = useState(0)
   const [isUpgrading, setIsUpgrading] = useState(false)
 
+  // 熟练度图标临时 URL 缓存（level -> tempURL）
+  const [proficiencyUrls, setProficiencyUrls] = useState<Record<number, string>>({})
+
   // 实体周边表单状态
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [formData, setFormData] = useState({ name: '', phone: '', address: '' })
@@ -94,7 +112,24 @@ export default function BondSystem() {
 
   useEffect(() => {
     loadHeroBonds()
+    loadProficiencyIcons()
   }, [])
+
+  // 预加载熟练度图标临时 URL
+  const loadProficiencyIcons = async () => {
+    const urls: Record<number, string> = {}
+    await Promise.all(
+      Object.entries(PROFICIENCY_ICONS).map(async ([level, cloudPath]) => {
+        try {
+          const tempUrl = await getTempFileURL(cloudPath)
+          if (tempUrl) urls[Number(level)] = tempUrl
+        } catch (e) {
+          console.warn(`熟练度图标加载失败 Lv.${level}`, e)
+        }
+      })
+    )
+    setProficiencyUrls(urls)
+  }
 
   const loadHeroBonds = async () => {
     try {
@@ -264,6 +299,7 @@ export default function BondSystem() {
 
   return (
     <View className='bond-container'>
+      <FutureBg />
       {/* 1. 顶部英雄切换器 */}
       <ScrollView className='hero-selector' scrollX>
         {heroes.map(hero => (
@@ -282,8 +318,17 @@ export default function BondSystem() {
       {/* 2. 羁绊进度看板 */}
       <View className={`bond-dashboard ${isUpgrading ? 'upgrading' : ''}`}>
         <View className='dashboard-header'>
-          <View className='level-badge'>
-            <Text className='level-text'>Lv.{activeHero.level}</Text>
+          <View className='dashboard-level-wrap'>
+            <View className='level-badge'>
+              <Text className='level-text'>Lv.{activeHero.level}</Text>
+            </View>
+            {proficiencyUrls[activeHero.level] && (
+              <Image
+                className='dashboard-proficiency-icon'
+                src={proficiencyUrls[activeHero.level]}
+                mode='aspectFit'
+              />
+            )}
           </View>
           <Text className='bond-value'>
             <Text className='bond-value-current'>{animatedBond}</Text>
@@ -330,10 +375,17 @@ export default function BondSystem() {
               )}
               <View className='node-content'>
                 <View className='node-header'>
-                  <Text className='node-title'>
-                    {node.title}
+                  <View className='node-title-wrap'>
+                    <Text className='node-title'>{node.title}</Text>
                     <Text className='node-level-tag'> Lv.{node.level}</Text>
-                  </Text>
+                    {proficiencyUrls[node.level] && (
+                      <Image
+                        className='proficiency-icon'
+                        src={proficiencyUrls[node.level]}
+                        mode='aspectFit'
+                      />
+                    )}
+                  </View>
                   {isUnlocked && <Text className='node-status'>已解锁</Text>}
                 </View>
                 <Text className='node-desc'>{node.descTemplate}</Text>

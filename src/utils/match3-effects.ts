@@ -75,11 +75,12 @@ function getMatchCenter(matched: Set<string>): { row: number; col: number } {
   return { row: Math.round(sumR / n), col: Math.round(sumC / n) }
 }
 
-/** 根据本次消除生成特效 */
+/** 根据本次消除生成特效（支持缩放） */
 export function buildClearEffects(
   matched: Set<string>,
   grid: Grid,
-  combo: number
+  combo: number,
+  scale = 1
 ): ClearEffects {
   const rings: BurstRing[] = []
   const particles: FlyParticle[] = []
@@ -87,16 +88,16 @@ export function buildClearEffects(
   const count = matched.size
   const scoreGain = count * SCORE_PER_TILE * combo
   const center = getMatchCenter(matched)
-  const centerLeft = cellLeftRpx(center.col) + CELL_SIZE_RPX / 2
-  const centerTop = cellTopRpx(center.row) + CELL_SIZE_RPX / 2
+  const centerLeft = (cellLeftRpx(center.col) + CELL_SIZE_RPX / 2) * scale
+  const centerTop = (cellTopRpx(center.row) + CELL_SIZE_RPX / 2) * scale
 
   matched.forEach((key) => {
     const { row, col } = parseKey(key)
     const type = grid[row]?.[col] ?? 0
     const tileKey = MATCH3_TILE_KEYS[type] as Match3TileKey | undefined
     const color = tileKey ? MATCH3_TILE_COLORS[tileKey] : '#f5c518'
-    const left = cellLeftRpx(col) + CELL_SIZE_RPX / 2
-    const top = cellTopRpx(row) + CELL_SIZE_RPX / 2
+    const left = (cellLeftRpx(col) + CELL_SIZE_RPX / 2) * scale
+    const top = (cellTopRpx(row) + CELL_SIZE_RPX / 2) * scale
 
     rings.push({
       id: nextId(),
@@ -119,8 +120,8 @@ export function buildClearEffects(
     if (count >= 4 && Math.random() > 0.5) {
       stars.push({
         id: nextId(),
-        left: left + (Math.random() - 0.5) * 40,
-        top: top + (Math.random() - 0.5) * 40,
+        left: left + (Math.random() - 0.5) * 40 * scale,
+        top: top + (Math.random() - 0.5) * 40 * scale,
         char: STAR_CHARS[Math.floor(Math.random() * STAR_CHARS.length)],
       })
     }
@@ -130,7 +131,7 @@ export function buildClearEffects(
     {
       id: nextId(),
       left: centerLeft,
-      top: centerTop - 20,
+      top: centerTop - 20 * scale,
       text: combo > 1 ? `+${scoreGain} x${combo}` : `+${scoreGain}`,
       combo,
     },
@@ -140,7 +141,7 @@ export function buildClearEffects(
     popups.push({
       id: nextId(),
       left: centerLeft,
-      top: centerTop - 56,
+      top: centerTop - 56 * scale,
       text: `${combo} 连击!`,
       combo,
     })

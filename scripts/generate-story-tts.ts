@@ -20,14 +20,30 @@ import axios from 'axios'
 const CONFIG = {
   // GPT-SoVITS API配置
   TTS_API_URL: process.env.TTS_API_URL || 'http://localhost:9880',
-  
+
+  // 模型路径
+  SOVITS_MODEL_PATH: './models/sovits/libai_v3_e2_s152_l64.pth',
+  GPT_MODEL_PATH: './models/gpt/libai_v4-e30.ckpt',
+
   // 参考音频配置（用于声音克隆）
   REFERENCE_AUDIO: 'reference/libai_sample.wav',  // 李白参考音频路径
   REFERENCE_TEXT: '人生得意须尽欢，莫使金樽空对月。',  // 参考音频对应的文本
-  
+
   // 输出配置
   OUTPUT_DIR: './output/tts-audio',
-  
+
+  // GPT-SoVITS 推理参数（与训练时保持一致）
+  INFERENCE_PARAMS: {
+    batch_size: 120,
+    sample_steps: 32,
+    split_interval: 0.3,
+    speed: 1.1,
+    top_k: 90,
+    top_p: 1,
+    temperature: 1,
+    repetition_penalty: 1.7
+  },
+
   // 情感参数映射
   EMOTION_PARAMS: {
     normal: { speed: 1.0, pitch: 0 },
@@ -36,7 +52,7 @@ const CONFIG = {
     thoughtful: { speed: 0.9, pitch: -0.05 },
     sad: { speed: 0.85, pitch: -0.1 }
   },
-  
+
   // 并发数
   CONCURRENT_LIMIT: 3
 }
@@ -289,23 +305,35 @@ async function generateAudio(item: typeof STORY_DIALOGUES[0]): Promise<{id: stri
   try {
     console.log(`  🎵 生成中: ${item.chapter} - ${item.id}`)
     
-    // GPT-SoVITS API调用（参考格式）
+    // GPT-SoVITS API调用（v3/v4 模型）
+    const emotionSpeed = CONFIG.EMOTION_PARAMS[item.emotion as keyof typeof CONFIG.EMOTION_PARAMS]?.speed || 1.0
+    const finalSpeed = CONFIG.INFERENCE_PARAMS.speed * emotionSpeed
+
     const response = await axios.post(
       `${CONFIG.TTS_API_URL}/tts`,
       {
         text: item.text,
+        // 模型配置
+        sovits_model_path: CONFIG.SOVITS_MODEL_PATH,
+        gpt_model_path: CONFIG.GPT_MODEL_PATH,
         // 参考音频配置
         refer_wav_path: CONFIG.REFERENCE_AUDIO,
         prompt_text: CONFIG.REFERENCE_TEXT,
         prompt_language: 'zh',
         text_language: 'zh',
-        // 情感参数
-        speed: CONFIG.EMOTION_PARAMS[item.emotion as keyof typeof CONFIG.EMOTION_PARAMS]?.speed || 1.0,
-        // 其他参数...
+        // 推理参数（与训练保持一致）
+        batch_size: CONFIG.INFERENCE_PARAMS.batch_size,
+        sample_steps: CONFIG.INFERENCE_PARAMS.sample_steps,
+        split_interval: CONFIG.INFERENCE_PARAMS.split_interval,
+        speed: finalSpeed,
+        top_k: CONFIG.INFERENCE_PARAMS.top_k,
+        top_p: CONFIG.INFERENCE_PARAMS.top_p,
+        temperature: CONFIG.INFERENCE_PARAMS.temperature,
+        repetition_penalty: CONFIG.INFERENCE_PARAMS.repetition_penalty
       },
       {
         responseType: 'arraybuffer',  // 获取音频二进制数据
-        timeout: 30000  // 30秒超时
+        timeout: 120000  // 120秒超时（batch_size较大需要更长时间）
       }
     )
 

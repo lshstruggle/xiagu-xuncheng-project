@@ -1,13 +1,8 @@
 // ============ 页面基础 ============
 
 .sms-page {
+  position: relative;
   min-height: 100vh;
-  background: linear-gradient(
-    180deg,
-    rgba(10, 15, 35, 0.95) 0%,
-    rgba(16, 24, 48, 0.98) 50%,
-    rgba(10, 15, 35, 0.95) 100%
-  );
   padding: 0 40rpx calc(48rpx + env(safe-area-inset-bottom));
 }
 

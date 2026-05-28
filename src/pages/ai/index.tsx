@@ -1,6 +1,7 @@
 import { View, Text, Image, Button } from '@tarojs/components'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Taro from '@tarojs/taro'
+import FutureBg from '../../components/future-bg'
 import {
   MATCH3_TILE_KEYS,
   MATCH3_TILE_COLORS,
@@ -543,6 +544,7 @@ export default function Match3Game() {
 
   return (
     <View className='match3-page'>
+      <FutureBg />
       <View className='match3-header'>
         <View className='stat-block'>
           {uiUrls.scoreIcon && !uiUrls.scoreIcon.startsWith('data:image') ? (

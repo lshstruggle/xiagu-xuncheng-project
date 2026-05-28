@@ -2,6 +2,7 @@ import { View, Text, Image, ScrollView } from '@tarojs/components'
 import { useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import './index.scss'
+import FutureBg from '../../components/future-bg'
 import { getUser, isLoggedIn, doLogin } from '../../services/auth'
 import { api } from '../../services/api'
 import { getTempFileURL } from '../../utils/temp-url-cache'
@@ -119,8 +120,12 @@ export default function User() {
   }
 
   const handleNav = (route: string) => {
-    if (route === 'achievements' || route === 'records') {
-      Taro.showToast({ title: '功能开发中', icon: 'none' })
+    if (route === 'achievements') {
+      Taro.navigateTo({ url: '/pages/bookmark-gallery/index?tab=badge' })
+      return
+    }
+    if (route === 'records') {
+      Taro.navigateTo({ url: '/pages/bookmark-gallery/index?tab=bookmark' })
       return
     }
     Taro.navigateTo({ url: `/pages/${route}/index` })
@@ -135,8 +140,10 @@ export default function User() {
   }
 
   return (
-    <ScrollView className='user-page' scrollY>
-      {/* 1. 头部用户信息区（头像昵称上下居中） */}
+    <View className='user-page'>
+      <FutureBg />
+      <ScrollView className='user-scroll' scrollY>
+        {/* 1. 头部用户信息区（头像昵称上下居中） */}
       <View className='profile-header'>
         <View className='avatar-large'>
           <Image className='avatar-img' src={getAvatarUrl()} mode='aspectFill' />
@@ -195,10 +202,17 @@ export default function User() {
           <Text className='menu-tag'>New</Text>
           <Text className='menu-arrow'>›</Text>
         </View>
+        <View className='menu-item' onClick={() => handleNav('poster-gallery')}>
+          <Text className='menu-icon'>🖼️</Text>
+          <Text className='menu-text'>海报储藏室</Text>
+          <Text className='menu-tag'>New</Text>
+          <Text className='menu-arrow'>›</Text>
+        </View>
       </View>
 
       {/* 底部安全间距 */}
       <View className='safe-bottom'></View>
     </ScrollView>
+  </View>
   )
 }
