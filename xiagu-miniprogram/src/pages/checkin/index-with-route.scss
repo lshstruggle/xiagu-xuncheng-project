@@ -1,0 +1,1882 @@
+page {
+  height: 100vh;
+  overflow: hidden;
+  background-color: #1A1A2E;
+}
+
+.explore-page {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #1A1A2E;
+}
+
+/* 地图全屏 */
+.explore-map {
+  width: 100%;
+  height: 100%;
+}
+
+/* 英雄脚下光效 */
+.hero-glow-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hero-glow {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  position: relative;
+  background: radial-gradient(
+    circle,
+    rgba(245, 197, 24, 0.25) 0%,
+    rgba(245, 197, 24, 0.08) 40%,
+    transparent 70%
+  );
+}
+
+/* 荣耀灯塔金色光晕 */
+.golden-glow-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 50;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(255, 215, 0, 0.2) 70%,
+    rgba(255, 215, 0, 0.4) 100%
+  );
+}
+
+.animate-fadeInOut {
+  animation: fadeInOut 2s ease-in-out forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 顶部状态栏 */
+.top-status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 60px 32px 16px;
+  background: linear-gradient(180deg, rgba(26,26,46,0.9) 0%, transparent 100%);
+  z-index: 20;
+}
+
+.bond-progress {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.bond-label {
+  font-size: 24px;
+  color: #F5C518;
+  font-weight: bold;
+}
+
+.progress-track {
+  flex: 1;
+  height: 8px;
+  background: #2A2A3E;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #F5C518, #FF8F00);
+  border-radius: 4px;
+}
+
+.checkin-count {
+  font-size: 22px;
+  color: #9E9E9E;
+}
+
+/* 可拖动的模式切换按钮 */
+.draggable-mode-switch {
+  position: fixed;
+  width: 60px;
+  height: 150px;
+  z-index: 25;
+  touch-action: none;
+}
+
+/* 右侧模式切换按钮 - 终极玻璃拟态设计 */
+.mode-switch {
+  width: 56px;
+  height: 144px;
+  /* 核心玻璃效果：半透明背景 */
+  background: rgba(255, 255, 255, 0.08);
+  /* 磨砂玻璃模糊 */
+  backdrop-filter: blur(24px) saturate(200%) brightness(1.1);
+  -webkit-backdrop-filter: blur(24px) saturate(200%) brightness(1.1);
+  /* 玻璃边框：上边和左边亮，下边和右边暗，模拟光线折射 */
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  border-radius: 28px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* 多层阴影：外部投影 + 内部高光 */
+  box-shadow:
+    /* 外部主投影 */
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    /* 外部金色光晕 */
+    0 0 24px rgba(245, 197, 24, 0.12),
+    /* 顶部内发光（模拟玻璃顶部反光） */
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    /* 底部内阴影（模拟玻璃底部折射） */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    /* 左侧内发光 */
+    inset 1px 0 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 悬停时增强玻璃感 */
+.mode-switch:active {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(245, 197, 24, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    inset 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+/* 按钮基础样式 */
+.mode-btn {
+  flex: 1;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 未选中状态 - 深色半透明玻璃 */
+.mode-btn:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* 未选中状态 - 顶部高光伪元素 */
+.mode-btn:not(.active)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+}
+
+/* 选中状态 - 金色玻璃高亮 */
+.mode-btn.active {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 215, 0, 0.95) 0%,
+    rgba(245, 197, 24, 1) 50%,
+    rgba(230, 160, 20, 0.95) 100%
+  );
+  border: 1px solid rgba(255, 230, 100, 0.6);
+  box-shadow:
+    /* 外部金色光晕 */
+    0 0 16px rgba(245, 197, 24, 0.5),
+    /* 顶部高光模拟玻璃光泽 */
+    inset 0 2px 4px rgba(255, 255, 255, 0.5),
+    /* 底部阴影增加立体感 */
+    inset 0 -2px 4px rgba(180, 120, 0, 0.3);
+  transform: scale(1.03);
+}
+
+/* 选中状态 - 顶部强光泽 */
+.mode-btn.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 5%;
+  right: 5%;
+  height: 40%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.0) 100%
+  );
+  border-radius: 20px 20px 50% 50%;
+  pointer-events: none;
+}
+
+.mode-btn:active {
+  transform: scale(0.97);
+}
+
+.mode-text {
+  font-size: 17px;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 600;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 3px;
+  transition: all 0.3s;
+  position: relative;
+  z-index: 1;
+}
+
+/* 选中文字 - 深色，利用渐变背景衬托 */
+.mode-btn.active .mode-text {
+  color: #1A1A2E;
+  font-weight: 700;
+}
+
+/* 回忆模式按钮 - 横向排列 */
+.memory-mode-btn {
+  position: fixed;
+  width: 52px;
+  height: 52px;
+  z-index: 25;
+}
+
+.memory-mode-btn .mode-btn.memory {
+  width: 52px;
+  height: 52px;
+  background: rgba(22, 33, 62, 0.9);
+  border: 1px solid rgba(245, 197, 24, 0.3);
+  border-radius: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.memory-mode-btn .mode-btn.memory .mode-text {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+  writing-mode: horizontal-tb;
+  letter-spacing: 0;
+}
+
+/* 定位模式切换按钮 */
+.location-mode-btn {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 100px;
+  width: 64px;
+  height: 64px;
+  background: rgba(22, 33, 62, 0.9);
+  border: 1px solid rgba(245, 197, 24, 0.3);
+  border-radius: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.location-mode-text {
+  font-size: 20px;
+  color: #F5C518;
+  font-weight: bold;
+}
+
+/* 羁绊碎片调试按钮 */
+.debug-bond-btn {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 180px;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, rgba(200, 162, 82, 0.9) 0%, rgba(184, 148, 31, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(200, 162, 82, 0.4);
+}
+
+.debug-icon {
+  font-size: 28px;
+}
+
+/* 调试面板 */
+.debug-panel-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.debug-panel {
+  background: linear-gradient(180deg, #1A1A2E 0%, #16213E 100%);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 70vh;
+  border: 2px solid rgba(200, 162, 82, 0.4);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px;
+  border-bottom: 1px solid rgba(200, 162, 82, 0.2);
+}
+
+.debug-title-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.debug-title {
+  font-size: 32px;
+  color: #C8A252;
+  font-weight: bold;
+}
+
+.debug-reset-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.reset-icon-text {
+  font-size: 28px;
+}
+
+.debug-close {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: rgba(245, 230, 200, 0.8);
+}
+
+.debug-list {
+  flex: 1;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.debug-list-inner {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.debug-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 24px;
+  border-left: 4px solid #C8A252;
+  width: 100%;
+  max-width: 600px;
+  box-sizing: border-box;
+}
+
+.debug-item.collected {
+  opacity: 0.6;
+  border-left-color: #4CAF50;
+}
+
+.debug-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.debug-item-name {
+  font-size: 28px;
+  color: #F5E6C8;
+  font-weight: bold;
+}
+
+.debug-item-rarity {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.debug-item-location {
+  font-size: 24px;
+  color: rgba(245, 230, 200, 0.7);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.debug-item-coords {
+  font-size: 20px;
+  color: rgba(245, 230, 200, 0.5);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.debug-item-distance {
+  font-size: 22px;
+  color: #C8A252;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.debug-teleport-btn {
+  background: linear-gradient(135deg, #C8A252 0%, #B8941F 100%);
+  border-radius: 32px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.teleport-text {
+  font-size: 26px;
+  color: #1A1A2E;
+  font-weight: bold;
+}
+
+/* 方向控制按钮 */
+.direction-controls {
+  position: fixed;
+  right: 100px;
+  bottom: 200px;
+  z-index: 20;
+}
+
+.d-pad {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.d-btn {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  background: rgba(22, 33, 62, 0.95);
+  border: 2px solid rgba(245, 197, 24, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #F5C518;
+}
+
+.d-btn:active {
+  background: rgba(245, 197, 24, 0.3);
+}
+
+.d-btn-text {
+  font-size: 20px;
+  color: #F5C518;
+}
+
+/* AG超玩会历史询问弹窗 */
+.ag-history-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.ag-history-content {
+  width: 80%;
+  max-width: 600px;
+  background: rgba(22, 33, 62, 0.98);
+  border: 2px solid rgba(245, 197, 24, 0.5);
+  border-radius: 24px;
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.ag-history-title {
+  font-size: 40px;
+  color: #F5C518;
+  font-weight: bold;
+  margin-bottom: 24px;
+  display: block;
+}
+
+.ag-history-desc {
+  font-size: 32px;
+  color: #fff;
+  margin-bottom: 48px;
+  display: block;
+  line-height: 1.5;
+}
+
+.ag-history-buttons {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+
+.ag-btn-ghost {
+  width: 160px;
+  height: 80px;
+  line-height: 80px;
+  text-align: center;
+  font-size: 28px;
+  color: #9E9E9E;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+.ag-btn-primary {
+  width: 160px;
+  height: 80px;
+  line-height: 80px;
+  text-align: center;
+  font-size: 28px;
+  color: #1A1A2E;
+  font-weight: bold;
+  background: linear-gradient(135deg, #F5C518, #FF8F00);
+  border-radius: 16px;
+}
+
+/* AG超玩会视频播放器 */
+.ag-video-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #000;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ag-video-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ag-video-player {
+  width: 100%;
+  height: 100%;
+}
+
+.ag-video-skip {
+  position: fixed;
+  top: 120px;
+  right: 32px;
+  padding: 16px 32px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 32px;
+  z-index: 1001;
+  border: 1px solid rgba(245, 197, 24, 0.5);
+}
+
+.ag-skip-text {
+  font-size: 28px;
+  color: #fff;
+}
+
+.d-btn.up {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.d-btn.down {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.d-btn.left {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.d-btn.right {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.d-btn.center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(245, 197, 24, 0.2);
+  border-color: #F5C518;
+  font-size: 12px;
+}
+
+/* 罗盘指示器 */
+.compass-indicator {
+  position: fixed;
+  left: 32px;
+  bottom: 180px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(22, 33, 62, 0.85);
+  border: 1px solid #2A2A3E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.compass-arrow {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 24px solid #EF5350;
+  position: absolute;
+  top: 12px;
+}
+
+.compass-text {
+  font-size: 18px;
+  color: #EF5350;
+  font-weight: bold;
+  margin-top: -16px;
+}
+
+/* POI遮罩层 */
+.poi-overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 19;
+}
+
+/* POI接近浮窗 */
+.poi-float {
+  position: fixed;
+  bottom: 140px;
+  left: 32px;
+  right: 32px;
+  max-height: 60vh;
+  background: rgba(22, 33, 62, 0.98);
+  border: 1px solid rgba(245, 197, 24, 0.3);
+  border-radius: 24px;
+  padding: 24px;
+  z-index: 20;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+}
+
+.poi-float-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(245, 197, 24, 0.2);
+  flex-shrink: 0;
+}
+
+.poi-float-icon {
+  width: 80px;
+  height: 80px;
+  font-size: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.poi-float-info {
+  flex: 1;
+}
+
+.poi-float-title {
+  font-size: 26px;
+  color: #F5C518;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.poi-float-name {
+  font-size: 32px;
+  color: #F0F0F0;
+  font-weight: bold;
+  display: block;
+}
+
+/* 详细信息区域 - 支持滑动 */
+.poi-detail-section {
+  flex: 1;
+  max-height: 35vh;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: rgba(26, 26, 46, 0.8);
+  border-radius: 16px;
+  overflow: scroll;
+}
+
+.poi-detail-row {
+  margin-bottom: 12px;
+}
+
+.poi-detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.poi-detail-inline {
+  display: flex;
+  gap: 24px;
+}
+
+.poi-detail-item {
+  flex: 1;
+}
+
+.poi-detail-label {
+  font-size: 22px;
+  color: #F5C518;
+  font-weight: bold;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.poi-detail-value {
+  font-size: 24px;
+  color: #F0F0F0;
+  line-height: 1.5;
+  display: block;
+}
+
+.poi-detail-story {
+  color: #B0B0B0;
+  font-size: 22px;
+}
+
+.poi-detail-challenge {
+  color: #4FC3F7;
+  font-size: 22px;
+  background: rgba(79, 195, 247, 0.1);
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid #4FC3F7;
+}
+
+.poi-detail-tips {
+  color: #FFD54F;
+  font-size: 22px;
+  background: rgba(255, 213, 79, 0.1);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.poi-detail-events {
+  color: #F5C518;
+  font-size: 22px;
+  background: rgba(245, 197, 24, 0.1);
+  padding: 10px;
+  border-radius: 8px;
+  border-left: 3px solid #F5C518;
+}
+
+.poi-float-buttons {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.poi-btn-ghost {
+  flex: 1;
+  height: 72px;
+  line-height: 72px;
+  text-align: center;
+  font-size: 26px;
+  color: #9E9E9E;
+  background: rgba(255,255,255,0.08);
+  border-radius: 12px;
+}
+
+.poi-btn-primary {
+  flex: 2;
+  height: 72px;
+  line-height: 72px;
+  text-align: center;
+  font-size: 26px;
+  color: #1A1A2E;
+  font-weight: bold;
+  background: linear-gradient(135deg, #F5C518, #FF8F00);
+  border-radius: 12px;
+}
+
+.poi-btn-disabled {
+  flex: 2;
+  height: 72px;
+  line-height: 72px;
+  text-align: center;
+  font-size: 26px;
+  color: #666;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+}
+
+.poi-btn-checked {
+  flex: 2;
+  height: 72px;
+  line-height: 72px;
+  text-align: center;
+  font-size: 26px;
+  color: #4CAF50;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 12px;
+}
+
+.poi-preview-notice {
+  background: rgba(245, 197, 24, 0.1);
+  border: 1px solid rgba(245, 197, 24, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.poi-preview-text {
+  font-size: 22px;
+  color: #F5C518;
+}
+
+.poi-checked-in-notice {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.poi-checked-in-text {
+  font-size: 22px;
+  color: #4CAF50;
+}
+
+/* 底部弧形工具栏 */
+.bottom-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 110px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* 底栏背景 */
+.toolbar-bg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #16213E;
+  border-top: 2px solid rgba(245, 197, 24, 0.3);
+  pointer-events: auto;
+}
+
+.toolbar-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 110px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 80px 8px;
+  pointer-events: none;
+}
+
+.toolbar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: auto;
+}
+
+/* 左右两侧小图标 */
+.toolbar-item.side .toolbar-icon-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.toolbar-item.side {
+  position: relative;
+}
+
+.toolbar-item.side .toolbar-icon-emoji {
+  width: 32px;
+  height: 32px;
+  font-size: 24px;
+  line-height: 32px;
+  text-align: center;
+}
+
+/* 中间相机按钮 - 大幅向上突出 */
+.toolbar-item.center {
+  position: absolute;
+  left: 50%;
+  bottom: 35px;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.toolbar-icon-wrap {
+  width: 75px;
+  height: 75px;
+  background: linear-gradient(145deg, #FFD700, #FFA500);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 6px 20px rgba(255, 165, 0, 0.6),
+    0 0 0 4px #1A1A2E;
+  border: 3px solid rgba(245, 197, 24, 0.8);
+}
+
+.toolbar-icon-emoji-large {
+  width: 42px;
+  height: 42px;
+  font-size: 34px;
+  line-height: 42px;
+  text-align: center;
+}
+
+.toolbar-label {
+  font-size: 12px;
+  color: #F5C518;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* 角标 */
+.toolbar-item .badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #FF4444 0%, #FF6666 100%);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-shadow: 0 2px 6px rgba(255, 68, 68, 0.4);
+  z-index: 10;
+}
+
+.badge-text {
+  font-size: 11px;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* 动画 */
+.animate-slideUp {
+  animation: slideUpFloat 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideUpFloat {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* 路线悬浮按钮 - 终极玻璃拟态设计 */
+.float-route-btn {
+  position: fixed;
+  top: calc(160rpx + env(safe-area-inset-top));
+  right: 20rpx;
+  z-index: 100;
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 50%;
+  /* 核心玻璃效果 */
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px) saturate(200%) brightness(1.1);
+  -webkit-backdrop-filter: blur(24px) saturate(200%) brightness(1.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* 多层阴影系统 */
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 24px rgba(245, 197, 24, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    inset 1px 0 0 rgba(255, 255, 255, 0.1),
+    inset -1px 0 0 rgba(0, 0, 0, 0.05);
+  outline: 1px solid rgba(245, 197, 24, 0.25);
+  outline-offset: 0px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* 圆形按钮顶部高光 */
+  overflow: hidden;
+}
+
+/* 圆形按钮顶部弧形高光 */
+.float-route-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 45%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.0) 100%
+  );
+  border-radius: 50% 50% 100% 100%;
+  pointer-events: none;
+}
+
+/* 按压效果 */
+.float-route-btn:active {
+  transform: scale(0.93);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 0 16px rgba(245, 197, 24, 0.2),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* 隐藏状态 */
+.float-route-btn.hide {
+  opacity: 0;
+  transform: scale(0.4);
+  pointer-events: none;
+}
+
+.float-route-icon {
+  font-size: 32rpx;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  position: relative;
+  z-index: 1;
+}
+
+.float-route-text {
+  font-size: 18rpx;
+  color: rgba(245, 197, 24, 0.95);
+  font-weight: 600;
+  margin-top: 2rpx;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 1;
+}
+
+/* 英雄未选择锁定遮罩 */
+.hero-lock-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(26, 26, 46, 0.98);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.hero-lock-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 40rpx;
+  text-align: center;
+}
+
+.hero-lock-icon {
+  font-size: 120rpx;
+  margin-bottom: 40rpx;
+  animation: lockPulse 2s ease-in-out infinite;
+}
+
+@keyframes lockPulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+.hero-lock-title {
+  font-size: 48rpx;
+  color: #F5C518;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.hero-lock-desc {
+  font-size: 28rpx;
+  color: rgba(245, 230, 200, 0.6);
+  margin-bottom: 60rpx;
+  line-height: 1.5;
+}
+
+.hero-lock-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+  width: 100%;
+  max-width: 400rpx;
+}
+
+.hero-lock-btn {
+  height: 88rpx;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-lock-btn.primary {
+  background: linear-gradient(135deg, #F5C518, #FF8F00);
+}
+
+.hero-lock-btn.primary .btn-text {
+  font-size: 32rpx;
+  color: #1A1A2E;
+  font-weight: bold;
+}
+
+.hero-lock-btn.ghost {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2rpx solid rgba(245, 197, 24, 0.3);
+}
+
+.hero-lock-btn.ghost .btn-text {
+  font-size: 32rpx;
+  color: #F5C518;
+}
+
+/* ============ 路线规划信息悬浮条（调试用） ============ */
+
+.route-info-bar {
+  position: fixed;
+  bottom: calc(160rpx + env(safe-area-inset-bottom));
+  left: 40rpx;
+  right: 40rpx;
+  height: 88rpx;
+  background: linear-gradient(
+    145deg,
+    rgba(16, 24, 48, 0.96),
+    rgba(22, 33, 62, 0.96)
+  );
+  border: 1rpx solid rgba(245, 197, 24, 0.3);
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  box-shadow:
+    0 8rpx 32rpx rgba(0, 0, 0, 0.45),
+    inset 0 1rpx 0 rgba(245, 197, 24, 0.15);
+  animation: routeBarIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  z-index: 500;
+}
+
+@keyframes routeBarIn {
+  from {
+    opacity: 0;
+    transform: translateY(16rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 左侧金色竖线 */
+.route-info-bar__line {
+  width: 4rpx;
+  height: 44rpx;
+  background: linear-gradient(180deg, transparent, #F5C518, transparent);
+  margin-left: 28rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+  border-radius: 2rpx;
+}
+
+.route-info-bar__content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.route-info-bar__distance {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #F5C518;
+  letter-spacing: 0.5rpx;
+}
+
+.route-info-bar__sep {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.route-info-bar__duration {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.route-info-bar__close {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+
+  &:active {
+    opacity: 0.6;
+  }
+}
+
+.route-info-bar__close-text {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ============ 出行方式选择器 ============ */
+
+.mode-selector-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mode-selector {
+  width: 100%;
+  max-height: 60vh;
+  background: linear-gradient(180deg, #1A1A2E 0%, #16213E 100%);
+  border-radius: 40rpx 40rpx 0 0;
+  padding: 40rpx 30rpx calc(40rpx + env(safe-area-inset-bottom));
+  animation: slideUpModal 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes slideUpModal {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.mode-selector__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.1);
+}
+
+.mode-selector__title {
+  font-size: 32rpx;
+  color: #F5C518;
+  font-weight: 600;
+}
+
+.mode-selector__close {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mode-selector__close-text {
+  font-size: 32rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.mode-selector__options {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.mode-option {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 30rpx;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.2s;
+}
+
+.mode-option:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mode-option.active {
+  background: rgba(66, 133, 244, 0.1);
+  border-color: rgba(66, 133, 244, 0.3);
+}
+
+.mode-option__icon {
+  font-size: 40rpx;
+  margin-right: 24rpx;
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+}
+
+.mode-option__label {
+  flex: 1;
+  font-size: 30rpx;
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.mode-option__check {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mode-option__check-icon {
+  font-size: 24rpx;
+  color: #FFFFFF;
+  font-weight: bold;
+}
+
+/* ============ 公交路线详情面板 ============ */
+
+.transit-detail-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  animation: fadeIn 0.2s ease;
+}
+
+.transit-detail-panel {
+  width: 100vw;
+  max-height: 90vh;
+  min-height: 30vh;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8F9FA 100%);
+  border-radius: 40rpx 40rpx 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  transition: height 0.1s ease-out;
+}
+
+/* 拖拽把手 */
+.transit-detail-drag-handle {
+  padding: 16rpx 0 8rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+.transit-detail-drag-bar {
+  width: 80rpx;
+  height: 8rpx;
+  background: #E0E0E0;
+  border-radius: 4rpx;
+  margin-bottom: 8rpx;
+}
+
+.transit-detail-drag-hint {
+  font-size: 20rpx;
+  color: #999999;
+}
+
+/* 头部 */
+.transit-detail-header {
+  padding: 16rpx 32rpx 24rpx;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+.transit-detail-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.transit-detail-from,
+.transit-detail-to {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1A1A2E;
+}
+
+.transit-detail-arrow {
+  font-size: 32rpx;
+  color: #9C27B0;
+  font-weight: bold;
+}
+
+.transit-detail-tags {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+}
+
+.transit-tag {
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.transit-tag--direct {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.transit-tag--transfer {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.transit-summary {
+  font-size: 24rpx;
+  color: #666666;
+}
+
+.transit-detail-close {
+  position: absolute;
+  top: 24rpx;
+  right: 24rpx;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.transit-detail-close-text {
+  font-size: 28rpx;
+  color: #999999;
+}
+
+/* 步骤列表 */
+.transit-steps {
+  flex: 1;
+  padding: 24rpx 32rpx;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.transit-step {
+  display: flex;
+  gap: 24rpx;
+  padding: 16rpx 0;
+}
+
+/* 时间线 */
+.transit-step-timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 48rpx;
+  flex-shrink: 0;
+}
+
+.transit-step-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  border: 4rpx solid #FFFFFF;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  z-index: 1;
+}
+
+.transit-step-dot--bus {
+  background: #4285F4;
+}
+
+.transit-step-dot--subway {
+  background: #9C27B0;
+}
+
+.transit-step-dot--walking {
+  background: #34A853;
+}
+
+.transit-step-line {
+  flex: 1;
+  width: 4rpx;
+  background: linear-gradient(180deg, #E0E0E0 0%, #E0E0E0 100%);
+  margin: 8rpx 0;
+}
+
+/* 步骤内容 */
+.transit-step-content {
+  flex: 1;
+  padding-bottom: 32rpx;
+  min-width: 0;
+  overflow: hidden;
+  max-width: calc(100% - 72rpx);
+}
+
+/* 步骤头部 - 通用 */
+.transit-step-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.transit-step-icon-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4285F4 0%, #3367D6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4rpx 12rpx rgba(66, 133, 244, 0.3);
+}
+
+.transit-step-icon-wrap--walking {
+  background: linear-gradient(135deg, #34A853 0%, #2E7D32 100%);
+  box-shadow: 0 4rpx 12rpx rgba(52, 168, 83, 0.3);
+}
+
+.transit-step-icon-wrap--subway {
+  background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+  box-shadow: 0 4rpx 12rpx rgba(156, 39, 176, 0.3);
+}
+
+.transit-step-icon {
+  font-size: 32rpx;
+}
+
+.transit-step-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.transit-step-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1A1A2E;
+  margin-bottom: 8rpx;
+}
+
+.transit-step-title--walking {
+  color: #34A853;
+  margin-bottom: 4rpx;
+}
+
+.transit-step-direction {
+  font-size: 24rpx;
+  color: #9C27B0;
+  font-weight: 500;
+}
+
+.transit-step-instruction {
+  font-size: 24rpx;
+  color: #666666;
+  margin-top: 4rpx;
+}
+
+.transit-step-meta {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.transit-step-duration {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1A1A2E;
+  display: block;
+}
+
+.transit-step-station-count {
+  font-size: 22rpx;
+  color: #999999;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.transit-step-distance-short {
+  font-size: 22rpx;
+  color: #34A853;
+  display: block;
+  margin-top: 4rpx;
+}
+
+/* 公交/地铁站点详情 */
+.transit-step-stations-detail {
+  margin-left: 84rpx;
+  margin-bottom: 16rpx;
+  background: #F8F9FA;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+}
+
+.transit-station-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.transit-station-marker {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.transit-station-marker--on {
+  background: #34A853;
+  box-shadow: 0 0 0 4rpx rgba(52, 168, 83, 0.2);
+}
+
+.transit-station-marker--off {
+  background: #EA4335;
+  box-shadow: 0 0 0 4rpx rgba(234, 67, 53, 0.2);
+}
+
+.transit-station-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.transit-station-name {
+  font-size: 28rpx;
+  color: #1A1A2E;
+  font-weight: 500;
+}
+
+.transit-station-label {
+  font-size: 22rpx;
+  color: #999999;
+  flex-shrink: 0;
+}
+
+.transit-station-connector {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 0;
+  margin-left: 6rpx;
+}
+
+.transit-station-connector-line {
+  width: 4rpx;
+  height: 48rpx;
+  background: linear-gradient(180deg, #34A853 0%, #EA4335 100%);
+  border-radius: 2rpx;
+}
+
+.transit-station-connector-text {
+  font-size: 22rpx;
+  color: #999999;
+  margin-left: 20rpx;
+}
+
+/* 距离信息 */
+.transit-step-distance {
+  margin-left: 84rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx dashed #E0E0E0;
+}
+
+.transit-distance-text {
+  font-size: 24rpx;
+  color: #666666;
+}
+
+.transit-price {
+  color: #FF9800;
+  font-weight: 500;
+}
+
+/* 步行详细指引 */
+.transit-walking-details {
+  margin-left: 84rpx;
+  background: #F8F9FA;
+  border-radius: 16rpx;
+  padding: 16rpx 24rpx;
+}
+
+.transit-walking-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 8rpx 0;
+  overflow: hidden;
+}
+
+.transit-walking-bullet {
+  font-size: 24rpx;
+  color: #34A853;
+  line-height: 36rpx;
+}
+
+.transit-walking-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: #1A1A2E;
+  line-height: 36rpx;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow: hidden;
+  padding-right: 80rpx;
+}
+
+.transit-walking-distance {
+  font-size: 22rpx;
+  color: #999999;
+  flex-shrink: 0;
+}
+
+.transit-walking-more {
+  font-size: 22rpx;
+  color: #999999;
+  padding: 8rpx 0 0 36rpx;
+}
+
+/* 底部操作栏 - 适度抬高以避免被tabBar遮挡 */
+.transit-detail-footer {
+  padding: 24rpx 32rpx calc(-30rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid rgba(0, 0, 0, 0.08);
+}
+
+.transit-detail-btn {
+  width: 100%;
+  height: 88rpx;
+  background: #4285F4;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(66, 133, 244, 0.3);
+}
+
+.transit-detail-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.transit-detail-btn-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+

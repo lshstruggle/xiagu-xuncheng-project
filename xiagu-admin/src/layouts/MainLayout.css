@@ -1,0 +1,49 @@
+/* 侧边栏菜单自定义样式 - 去AI化 */
+
+/* 菜单项默认样式 */
+.custom-sidebar-menu .ant-menu-item {
+  color: #595959;
+  margin: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+/* 菜单项悬停效果 */
+.custom-sidebar-menu .ant-menu-item:hover {
+  color: #1890ff;
+  background: #e6f7ff !important;
+}
+
+/* 选中项样式 - 使用蓝色 */
+.custom-sidebar-menu .ant-menu-item-selected {
+  color: #1890ff !important;
+  background: #e6f7ff !important;
+  font-weight: 500;
+}
+
+/* 选中项图标颜色 */
+.custom-sidebar-menu .ant-menu-item-selected .anticon {
+  color: #1890ff;
+}
+
+/* 子菜单样式 */
+.custom-sidebar-menu .ant-menu-submenu-title {
+  color: #595959;
+  margin: 4px 8px;
+  border-radius: 6px;
+}
+
+.custom-sidebar-menu .ant-menu-submenu-title:hover {
+  color: #1890ff;
+  background: #e6f7ff !important;
+}
+
+/* 去除默认的右边框 */
+.custom-sidebar-menu.ant-menu-inline {
+  border-right: none;
+}
+
+/* 折叠状态下的样式 */
+.custom-sidebar-menu.ant-menu-inline-collapsed .ant-menu-item {
+  padding: 0 24px !important;
+}

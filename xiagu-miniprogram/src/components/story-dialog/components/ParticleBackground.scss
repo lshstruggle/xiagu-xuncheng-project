@@ -1,0 +1,22 @@
+.particle-bg-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  // 粒子层在最底部，不遮挡对话内容
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.particle-canvas {
+  width: 100%;
+  height: 100%;
+  opacity: 0.7;
+  // 淡入效果
+  animation: particleFadeIn 0.8s ease forwards;
+}
+
+@keyframes particleFadeIn {
+  from { opacity: 0; }
+  to { opacity: 0.7; }
+}

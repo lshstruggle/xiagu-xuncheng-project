@@ -1,0 +1,39 @@
+# 峡谷寻城记 - 简化版Docker配置（使用本地运行）
+# 用于演示，不构建镜像，直接使用本地服务
+
+services:
+  # 管理后台 - 使用开发模式
+  xiagu-admin:
+    image: node:20-alpine
+    container_name: xiagu-admin
+    working_dir: /app
+    volumes:
+      - ./xiagu-admin:/app
+    ports:
+      - "3000:5173"
+    command: sh -c "npm install && npm run dev -- --host"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080
+    networks:
+      - xiagu-network
+
+  # TTS语音合成服务 (可选)
+  xiagu-tts:
+    image: breakstring/gpt-sovits:latest
+    container_name: xiagu-tts
+    restart: unless-stopped
+    ports:
+      - "9880:9880"
+    volumes:
+      - ./GPT-SoVITS:/workspace/GPT-SoVITS
+      - ./models:/workspace/models
+    environment:
+      - is_half=false
+    networks:
+      - xiagu-network
+    profiles:
+      - with-tts
+
+networks:
+  xiagu-network:
+    driver: bridge

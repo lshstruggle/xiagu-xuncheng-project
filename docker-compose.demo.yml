@@ -1,0 +1,73 @@
+# 峡谷寻城记 - Demo部署配置（评委版）
+# 使用说明：
+# 1. 先启动数据库：docker-compose up -d mongodb redis
+# 2. 恢复数据：docker-compose exec mongodb mongorestore --db xiagu_xuncheng --drop /data/backup/xiagu_xuncheng/
+# 3. 本地启动Go后端：cd xiagu-server && go run cmd/server/main.go
+# 4. 本地启动管理后台：cd xiagu-admin && npm run dev
+# 5. 可选启动TTS：docker-compose --profile with-tts up -d xiagu-tts
+
+services:
+  # MongoDB数据库
+  mongodb:
+    image: mongo:7.0
+    container_name: xiagu-mongodb
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_DATABASE: xiagu_xuncheng
+    volumes:
+      - mongodb_data:/data/db
+      - ./docker/init-scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./docker/mongodb-backup:/data/backup:ro
+    networks:
+      - xiagu-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: xiagu-redis
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - xiagu-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TTS语音合成服务 (可选)
+  xiagu-tts:
+    image: breakstring/gpt-sovits:latest
+    container_name: xiagu-tts
+    restart: unless-stopped
+    ports:
+      - "9880:9880"
+      - "9871:9871"
+    volumes:
+      - ./GPT-SoVITS:/workspace/GPT-SoVITS
+      - ./models:/workspace/models
+      - ./tts_output:/workspace/tts_output
+    environment:
+      - is_half=false
+    networks:
+      - xiagu-network
+    profiles:
+      - with-tts
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  xiagu-network:
+    driver: bridge

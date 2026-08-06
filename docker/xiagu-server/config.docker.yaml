@@ -1,0 +1,43 @@
+# 后端服务Docker环境配置
+
+server:
+  port: 8080
+  mode: "release"
+
+mongodb:
+  uri: "mongodb://xiagu-mongodb:27017"
+  database: "xiagu_xuncheng"
+  max_pool_size: 20
+  min_pool_size: 5
+  connect_timeout: 10s
+
+redis:
+  addr: "xiagu-redis:6379"
+  password: ""
+  db: 0
+  pool_size: 50
+
+wechat:
+  app_id: "wx_demo_appid"
+  app_secret: "demo_secret"
+
+jwt:
+  secret: "xiagu-xuncheng-jwt-secret-demo"
+  expire_hours: 168
+
+yuanqi:
+  base_url: "https://open.hunyuan.tencent.com/openapi/v1/agent/chat/completions"
+  token: "demo_token"
+  assistant_id: "demo_assistant"
+  timeout: 15s
+  max_retries: 2
+
+tts:
+  base_url: "http://xiagu-tts:9880"
+  timeout: 30s
+  cache_dir: "./tts_cache"
+
+lbs:
+  default_trigger_radius: 80
+  distance_tolerance: 1.2
+  checkin_cooldown: 86400

@@ -1,0 +1,64 @@
+.tts-wave-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // 尺寸变体
+  &.size-small {
+    width: 40rpx;
+    height: 28rpx;
+    .tts-wave-bar { width: 4rpx; border-radius: 2rpx; }
+    .tts-speaker-icon { font-size: 22rpx; }
+  }
+
+  &.size-medium {
+    width: 56rpx;
+    height: 36rpx;
+    .tts-wave-bar { width: 5rpx; border-radius: 3rpx; }
+    .tts-speaker-icon { font-size: 28rpx; }
+  }
+
+  &.size-large {
+    width: 72rpx;
+    height: 48rpx;
+    .tts-wave-bar { width: 6rpx; border-radius: 3rpx; }
+    .tts-speaker-icon { font-size: 36rpx; }
+  }
+}
+
+// 波形条容器
+.tts-wave-bars {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  height: 100%;
+}
+
+// 单根波形柱
+.tts-wave-bar {
+  flex-shrink: 0;
+  min-height: 8rpx;
+  border-radius: 3rpx;
+  transform-origin: center bottom;
+  animation: waveJump 0.8s ease-in-out infinite alternate;
+  // 关键：发光效果
+  box-shadow: 0 0 6rpx rgba(245, 197, 24, 0.4);
+}
+
+@keyframes waveJump {
+  0% {
+    transform: scaleY(0.3);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scaleY(1.5);
+    opacity: 1;
+  }
+}
+
+// 静态图标
+.tts-static-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

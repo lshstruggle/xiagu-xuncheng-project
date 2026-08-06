@@ -1,16 +1,57 @@
-
-node_modules/
-
-dist/
-
-.temp/
-.rn_temp/
-.swc/
-*.log
-
+# macOS / editors / local AI tooling
+.DS_Store
+.codebuddy/
 .idea/
 .vscode/
-.DS_Store
 
+# Secrets and machine-local configuration
 .env
-.env.local
+.env.*
+!.env.example
+*.pem
+*.key
+xiagu-server/configs/config.yaml
+xiagu-miniprogram/project.private.config.json
+
+# JavaScript dependencies and build output
+node_modules/
+dist/
+build/
+.next/
+.cache/
+coverage/
+*.tsbuildinfo
+
+# Python environments and caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Logs, PIDs, generated caches and binaries
+*.log
+*.pid
+tts_cache/
+tts_output/
+output/
+**/codex-pet-run/
+xiagu-server/main
+xiagu-server/server
+xiagu-server/pregenerate.log
+
+# Large third-party runtimes and AI model weights
+GPT-SoVITS/
+models/
+*.ckpt
+*.pth
+*.pt
+*.onnx
+*.bin
+*.dll
+*.dylib
+*.so
+*.exe
+
+# Generated/archive bundles and large source videos
+*.zip
+视频素材/

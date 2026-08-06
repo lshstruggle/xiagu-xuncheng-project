@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"user_id":{"$numberInt":"1"},"poi_id":{"$numberInt":"1"},"checkin_at":{"$numberInt":"-1"}},"name":"user_id_1_poi_id_1_checkin_at_-1"}],"uuid":"b2bee6537ab14906bad2aedae546d01e","collectionName":"checkins","type":"collection"}

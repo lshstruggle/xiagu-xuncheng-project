@@ -1,0 +1,55 @@
+server:
+  port: 8080
+  mode: "debug"
+
+mongodb:
+  uri: "mongodb://localhost:27018"
+  database: "xiagu_xuncheng"
+  max_pool_size: 20
+  min_pool_size: 5
+  connect_timeout: 10s
+
+redis:
+  addr: "localhost:6381"
+  password: ""
+  db: 0
+  pool_size: 50
+
+wechat:
+  app_id: "your-wechat-app-id"
+  app_secret: "your-wechat-app-secret"
+
+jwt:
+  secret: "replace-with-a-long-random-secret"
+  expire_hours: 168
+
+yuanqi:
+  base_url: "https://open.hunyuan.tencent.com/openapi/v1/agent/chat/completions"
+  token: "your-yuanqi-token"
+  assistant_id: "your-assistant-id"
+  timeout: 15s
+  max_retries: 2
+
+tts:
+  base_url: "http://127.0.0.1:9881"
+  timeout: 120s
+  cache_dir: "./tts_cache"
+  sovits_model_path: "./models/libai/sovits_v3.pth"
+  gpt_model_path: "./models/libai/gpt_v4.ckpt"
+  reference_audio: "./models/libai/reference.wav"
+  reference_text: "replace-with-reference-text"
+  inference_params:
+    batch_size: 60
+    sample_steps: 16
+    split_interval: 0.3
+    speed: 1.1
+    top_k: 90
+    top_p: 1.0
+    temperature: 1.0
+    repetition_penalty: 1.7
+
+lbs:
+  default_trigger_radius: 80
+  distance_tolerance: 1.2
+  checkin_cooldown: 86400
+

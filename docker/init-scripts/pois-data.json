@@ -1,0 +1,548 @@
+[
+  {
+    "_id": "69d75d83cb56990608054e40",
+    "city_code": "CD",
+    "type": "arena",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "name": "量子光电竞中心",
+    "images": [],
+    "priority": 90,
+    "description": "KPL西部主场",
+    "status": "active",
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "category": "电竞",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.09,
+        30.66
+      ]
+    },
+    "trigger_radius": 80,
+    "hero_narrations": {
+      "libai": "前方那座建筑，见证了无数峡谷英雄的荣耀时刻。金雨落下时，整座城都在为他们欢呼。",
+      "hanxin": "KPL西部主场，承载了多少少年的电竞梦想。"
+    },
+    "rewards": {
+      "bond_value": 25
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e38",
+    "priority": 100,
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.047,
+        30.642
+      ]
+    },
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "name": "武侯祠",
+    "type": "blue_buff",
+    "category": "文化景点",
+    "trigger_radius": 100,
+    "description": "中国唯一君臣合祀祠庙",
+    "images": [],
+    "status": "active",
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "city_code": "CD",
+    "hero_narrations": {
+      "libai": "遥想诸葛丞相，运筹帷幄，何异于峡谷军师？此处柏森森，清幽宜人。",
+      "zhugeliang": "（整理衣冠）主公，亮之祠堂，实在惭愧。鞠躬尽瘁，死而后已。"
+    },
+    "rewards": {
+      "bond_value": 20,
+      "items": [
+        {
+          "type": "knowledge_card",
+          "id": "kc_wuhouci",
+          "name": "武侯祠历史卡"
+        }
+      ]
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e3c",
+    "priority": 95,
+    "city_code": "CD",
+    "category": "文化景点",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.028,
+        30.668
+      ]
+    },
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "type": "blue_buff",
+    "trigger_radius": 100,
+    "description": "古蜀文明的黄金密码",
+    "images": [],
+    "status": "active",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "name": "金沙遗址",
+    "hero_narrations": {
+      "libai": "太阳神鸟金饰，古蜀文明的瑰宝！千年之前的匠人，亦有如此精湛技艺！",
+      "zhugeliang": "古蜀文明，神秘莫测。这太阳神鸟，莫非是上古神器？"
+    },
+    "rewards": {
+      "bond_value": 20,
+      "items": [
+        {
+          "type": "knowledge_card",
+          "id": "kc_jinsha",
+          "name": "金沙遗址历史卡"
+        }
+      ]
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e3b",
+    "type": "club",
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.03,
+        30.65
+      ]
+    },
+    "description": "西南最大专业级XR数字电竞场馆",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "category": "电竞",
+    "trigger_radius": 80,
+    "images": [],
+    "status": "active",
+    "priority": 90,
+    "city_code": "CD",
+    "name": "AG电竞中心",
+    "hero_narrations": {
+      "libai": "心怀荣耀，勇往直前！AG的精神，值得敬佩。",
+      "hanxin": "电竞战场，亦是英雄试炼之地。"
+    },
+    "rewards": {
+      "bond_value": 25
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e31",
+    "name": "贺记蛋烘糕",
+    "category": "美食",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.077,
+        30.674
+      ]
+    },
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "type": "red_buff",
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "description": "清朝传下来的成都传统小吃，外酥内软",
+    "status": "active",
+    "city_code": "CD",
+    "trigger_radius": 50,
+    "images": [],
+    "priority": 80,
+    "hero_narrations": {
+      "libai": "外酥内软，香甜可口，比红buff回血还快！",
+      "luban": "大哥哥/大姐姐！这个糕点闻起来好香啊！鲁班想吃！"
+    },
+    "rewards": {
+      "bond_value": 10
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e32",
+    "location": {
+      "coordinates": [
+        104.076,
+        30.6755
+      ],
+      "type": "Point"
+    },
+    "name": "洞子口张老二凉粉",
+    "images": [],
+    "status": "active",
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "city_code": "CD",
+    "type": "red_buff",
+    "category": "美食",
+    "trigger_radius": 50,
+    "description": "文殊院旁百年老店，甜水面五味俱全",
+    "priority": 80,
+    "hero_narrations": {
+      "libai": "百年老店，手艺传承，这味道怕是比峡谷里的野怪还让人惦记！",
+      "zhugeliang": "五味调和，此乃民生之本。甜水面之甜，乃人生百味之首。"
+    },
+    "rewards": {
+      "bond_value": 10
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e34",
+    "description": "老字号苍蝇馆子之王，味道霸道性价比高",
+    "images": [],
+    "status": "active",
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "city_code": "CD",
+    "name": "明婷饭店",
+    "type": "red_buff",
+    "trigger_radius": 50,
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.078,
+        30.674
+      ]
+    },
+    "priority": 85,
+    "category": "美食",
+    "hero_narrations": {
+      "libai": "苍蝇馆子藏美味，市井烟火最动人！来，干了这碗人间烟火气！",
+      "zhugeliang": "大隐隐于市，真正的美食往往藏于市井之间。"
+    },
+    "rewards": {
+      "bond_value": 10
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e35",
+    "city_code": "CD",
+    "type": "red_buff",
+    "description": "始创于清朝同治年间的川菜代表名菜",
+    "name": "陈麻婆豆腐",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.075,
+        30.665
+      ]
+    },
+    "trigger_radius": 50,
+    "priority": 85,
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "category": "美食",
+    "images": [],
+    "status": "active",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "hero_narrations": {
+      "libai": "麻辣鲜香，入口即化！这麻婆豆腐比我的青莲剑歌还要辣！",
+      "diaochan": "这豆腐嫩滑如肌肤，麻辣似热情，真乃人间美味~"
+    },
+    "rewards": {
+      "bond_value": 10
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e36",
+    "status": "active",
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "city_code": "CD",
+    "type": "red_buff",
+    "priority": 80,
+    "name": "乐山钵钵鸡",
+    "category": "美食",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.058,
+        30.662
+      ]
+    },
+    "description": "冷串串浸在秘制红油中，麻辣鲜香",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "trigger_radius": 50,
+    "images": [],
+    "hero_narrations": {
+      "libai": "串串香，红油亮，一口下去满嘴香！这才是成都的味道！",
+      "luban": "哇！好多肉肉串在一起！鲁班要全部吃掉！"
+    },
+    "rewards": {
+      "bond_value": 10
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e37",
+    "type": "red_buff",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.049,
+        30.645
+      ]
+    },
+    "images": [],
+    "description": "三国文化主题街区，夜晚灯笼亮起仿佛穿越",
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "city_code": "CD",
+    "name": "锦里古街",
+    "trigger_radius": 100,
+    "status": "active",
+    "category": "文化景点",
+    "priority": 100,
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "hero_narrations": {
+      "libai": "推塔！成都的高地，已被你我征服！此情此景，当浮一大白！",
+      "guanyu": "此地颇有古战场之风，红灯笼如战旗飘扬。"
+    },
+    "rewards": {
+      "bond_value": 15
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e3a",
+    "name": "沈堂甜水面",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "city_code": "CD",
+    "trigger_radius": 50,
+    "type": "red_buff",
+    "description": "藏在居民楼下的神级摊子",
+    "images": [],
+    "category": "美食",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.055,
+        30.635
+      ]
+    },
+    "status": "active",
+    "priority": 80,
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "hero_narrations": {
+      "libai": "面条粗韧有嚼劲，甜辣交织，别有一番风味！",
+      "diaochan": "这面条如丝般缠绕，甜中带辣，恰似爱情的滋味~"
+    },
+    "rewards": {
+      "bond_value": 10
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e3e",
+    "location": {
+      "coordinates": [
+        104.081,
+        30.656
+      ],
+      "type": "Point"
+    },
+    "description": "复古网红火锅，地道牛油锅底",
+    "city_code": "CD",
+    "name": "吼堂老火锅",
+    "category": "美食",
+    "status": "active",
+    "priority": 85,
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "type": "red_buff",
+    "images": [],
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "trigger_radius": 50,
+    "hero_narrations": {
+      "libai": "牛油锅底翻滚，毛肚鸭肠起舞！这才是成都的灵魂！",
+      "diaochan": "热气腾腾，香气扑鼻，这火锅比我的舞姿还要热烈~"
+    },
+    "rewards": {
+      "bond_value": 10
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e3f",
+    "name": "西月城潭豆花",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "category": "美食",
+    "images": [],
+    "status": "active",
+    "type": "red_buff",
+    "location": {
+      "coordinates": [
+        104.082,
+        30.658
+      ],
+      "type": "Point"
+    },
+    "trigger_radius": 50,
+    "priority": 80,
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "city_code": "CD",
+    "description": "冰醉豆花解辣神器",
+    "hero_narrations": {
+      "libai": "冰醉豆花，醪糟香甜，解辣神器也！",
+      "luban": "甜甜的，凉凉的，鲁班喜欢！"
+    },
+    "rewards": {
+      "bond_value": 10
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e41",
+    "category": "美食",
+    "priority": 80,
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "city_code": "CD",
+    "trigger_radius": 50,
+    "images": [],
+    "status": "active",
+    "name": "小妹蹄花",
+    "description": "蹄花炖得软烂脱骨",
+    "type": "red_buff",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.089,
+        30.648
+      ]
+    },
+    "hero_narrations": {
+      "libai": "蹄花炖得软烂脱骨，深夜慰藉的佳品！",
+      "diaochan": "胶原蛋白满满，美容养颜，姐妹们快来尝尝~"
+    },
+    "rewards": {
+      "bond_value": 10
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e30",
+    "category": "酒店",
+    "trigger_radius": 80,
+    "city_code": "CD",
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "name": "成都院子酒店",
+    "type": "spirit_lighthouse",
+    "description": "16座川西院落组成的非遗文化主题酒店",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.048,
+        30.6755
+      ]
+    },
+    "images": [],
+    "status": "active",
+    "priority": 90,
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "hero_narrations": {
+      "libai": "院中有院，楼中有楼，这格局倒像是红蓝双方的基地。",
+      "zhugeliang": "此乃川西民居之典范，四合院落，雕梁画栋，颇有古韵。"
+    },
+    "rewards": {
+      "bond_value": 20
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e33",
+    "images": [],
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.076,
+        30.675
+      ]
+    },
+    "description": "千年禅林，红墙银杏，盖碗茶文化体验地",
+    "priority": 95,
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "city_code": "CD",
+    "name": "文殊院",
+    "type": "spirit_lighthouse",
+    "status": "active",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "category": "文化景点",
+    "trigger_radius": 100,
+    "hero_narrations": {
+      "libai": "红墙之内，禅意悠然。千年银杏下品一碗香茗，比拿蓝buff还提神！",
+      "zhugeliang": "主公，禅茶一味，静心修身之地。此处可暂离峡谷纷争，得片刻安宁。"
+    },
+    "rewards": {
+      "bond_value": 20
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e3d",
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "name": "春熙路/太古里",
+    "category": "商圈",
+    "priority": 100,
+    "city_code": "CD",
+    "type": "spirit_lighthouse",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.082,
+        30.656
+      ]
+    },
+    "trigger_radius": 120,
+    "description": "成都最繁华的时尚中心",
+    "images": [],
+    "status": "active",
+    "hero_narrations": {
+      "libai": "哈哈哈，又下一塔！这人间烟火，比峡谷还热闹！",
+      "hanxin": "繁华之地，人来人往，正是观察众生百态的好去处。"
+    },
+    "rewards": {
+      "bond_value": 30
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e2f",
+    "city_code": "CD",
+    "location": {
+      "coordinates": [
+        104.055,
+        30.669
+      ],
+      "type": "Point"
+    },
+    "priority": 100,
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "name": "宽窄巷子",
+    "type": "tower",
+    "description": "由宽巷子、窄巷子、井巷子组成的清朝古街",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "category": "文化景点",
+    "trigger_radius": 100,
+    "images": [],
+    "status": "active",
+    "hero_narrations": {
+      "libai": "此处巷陌纵横，颇似峡谷草丛，宜伏击，亦宜品茗！",
+      "zhugeliang": "主公，此巷格局暗藏玄机，宽可容马，窄仅通人，乃兵法中一夫当关之地。"
+    },
+    "rewards": {
+      "bond_value": 15
+    }
+  },
+  {
+    "_id": "69d75d83cb56990608054e39",
+    "type": "tower",
+    "images": [],
+    "category": "文化景点",
+    "status": "active",
+    "priority": 95,
+    "name": "杜甫草堂",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        104.055,
+        30.6245
+      ]
+    },
+    "created_at": "2026-04-09T08:04:19.950Z",
+    "trigger_radius": 100,
+    "description": "诗圣杜甫流寓成都故居",
+    "updated_at": "2026-04-09T08:04:19.950Z",
+    "city_code": "CD",
+    "hero_narrations": {
+      "libai": "杜子美虽非我知己，但其诗文厚重，令人敬佩。这草堂虽简，却是诗意栖居之所。",
+      "zhugeliang": "诗圣流寓之地，虽茅屋简陋，却孕育千古诗篇。"
+    },
+    "rewards": {
+      "bond_value": 20
+    }
+  }
+]

@@ -1,0 +1,53 @@
+# Docker构建忽略文件
+
+# 依赖目录
+node_modules/
+vendor/
+
+# 构建产物
+dist/
+build/
+*.exe
+*.dll
+*.so
+
+# 日志
+*.log
+logs/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 版本控制
+.git/
+.gitignore
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 测试
+coverage/
+*.test
+
+# 文档（保留核心文档）
+文档资料/*.pdf
+!文档资料/产品需求文档*.pdf
+
+# 大文件
+视频素材/
+*.mp4
+*.mov
+
+# 缓存
+tts_cache/*.wav
+!tts_cache/.gitkeep
+
+# 其他
+.DS_Store
+Thumbs.db

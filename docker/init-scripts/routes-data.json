@@ -1,0 +1,77 @@
+[
+  {
+    "_id": "69d75d83cb56990608054e42",
+    "player_footprint_count": 2,
+    "tags": [
+      "文化",
+      "美食",
+      "历史"
+    ],
+    "difficulty": "easy",
+    "updated_at": "2026-04-09T08:04:19.999Z",
+    "description": "漫步千年古巷，穿越宽窄之间品味老成都的烟火与文艺",
+    "duration": "约2小时",
+    "distance": 2.3,
+    "cover_image": "",
+    "poi_sequence": [],
+    "status": "active",
+    "city_code": "CD",
+    "name": "宽窄巷子探秘",
+    "created_at": "2026-04-09T08:04:19.999Z",
+    "spirit_lighthouse_count": 2,
+    "recommended_heroes": [
+      "libai",
+      "diaochan"
+    ]
+  },
+  {
+    "_id": "69d75d83cb56990608054e43",
+    "spirit_lighthouse_count": 2,
+    "poi_sequence": [],
+    "created_at": "2026-04-09T08:04:19.999Z",
+    "updated_at": "2026-04-09T08:04:19.999Z",
+    "name": "锦里古街漫游",
+    "difficulty": "normal",
+    "city_code": "CD",
+    "player_footprint_count": 1,
+    "description": "穿越三国风云，在锦里与武侯祠间寻找英雄足迹",
+    "duration": "约1.5小时",
+    "cover_image": "",
+    "tags": [
+      "三国",
+      "文化",
+      "电竞"
+    ],
+    "status": "active",
+    "distance": 1.8,
+    "recommended_heroes": [
+      "guanyu",
+      "zhugeliang"
+    ]
+  },
+  {
+    "_id": "69d75d83cb56990608054e44",
+    "updated_at": "2026-04-09T08:04:19.999Z",
+    "description": "成都最繁华的心脏地带，霓虹之下藏着最多的峡谷秘密",
+    "difficulty": "hard",
+    "distance": 1.2,
+    "created_at": "2026-04-09T08:04:19.999Z",
+    "poi_sequence": [],
+    "player_footprint_count": 3,
+    "city_code": "CD",
+    "tags": [
+      "时尚",
+      "美食",
+      "电竞"
+    ],
+    "cover_image": "",
+    "recommended_heroes": [
+      "hanxin",
+      "lanlingwang"
+    ],
+    "spirit_lighthouse_count": 1,
+    "name": "太古里巡礼",
+    "duration": "约1小时",
+    "status": "active"
+  }
+]
