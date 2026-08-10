@@ -10,14 +10,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"xiagu-server/internal/app"
 	"xiagu-server/internal/config"
 	"xiagu-server/internal/handler"
-	"xiagu-server/internal/middleware"
 	"xiagu-server/internal/repository"
 	"xiagu-server/internal/router"
 	"xiagu-server/internal/service"
@@ -112,11 +111,7 @@ func main() {
 	handlers := handler.NewHandlers(svcs, db)
 
 	// 7. 创建Gin
-	if cfg.Server.Mode == "release" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-	engine := gin.New()
-	engine.Use(gin.Recovery(), middleware.CORS())
+	engine := app.BuildEngine(cfg.Server.Mode)
 
 	// 8. 注册路由
 	router.Setup(engine, handlers)
