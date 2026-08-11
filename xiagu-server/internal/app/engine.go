@@ -14,8 +14,11 @@ func BuildEngine(mode string) *gin.Engine {
 	engine := gin.New()
 	engine.Use(
 		gin.Recovery(),
+		middleware.RequestID(),
 		middleware.CORS(),
 	)
+
+	registerHealth(engine, mode)
 
 	return engine
 }

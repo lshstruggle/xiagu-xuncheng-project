@@ -8,9 +8,6 @@ import (
 )
 
 func Setup(r *gin.Engine, h *handler.Handlers) {
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok", "service": "xiagu-server"})
-	})
 
 	v1 := r.Group("/api/v1")
 
