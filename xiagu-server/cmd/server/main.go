@@ -28,10 +28,14 @@ import (
 
 func main() {
 	// 1. 加载配置
-	cfgPath := os.Getenv("CONFIG_PATH")
-	if cfgPath == "" {
-		cfgPath = "configs/config.yaml"
+	cfgPath, err := config.ResolveRuntimeConfigPath(
+		os.Getenv("CONFIG_PATH"),
+		"configs/config.yaml",
+	)
+	if err != nil {
+		log.Fatalf("解析配置来源失败: %v", err)
 	}
+
 	if err := config.Load(cfgPath); err != nil {
 		log.Fatalf("加载配置失败: %v", err)
 	}
