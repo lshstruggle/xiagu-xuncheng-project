@@ -1,10 +1,13 @@
 server:
   port: 8080
   mode: "debug"
+  allowed_admin_origins:
+    - "http://localhost:5173"
 
 mongodb:
   uri: "mongodb://localhost:27018"
   database: "xiagu_xuncheng"
+  collection_prefix: ""
   max_pool_size: 20
   min_pool_size: 5
   connect_timeout: 10s
