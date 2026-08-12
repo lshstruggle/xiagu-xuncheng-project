@@ -11,11 +11,10 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"xiagu-server/internal/app"
 	"xiagu-server/internal/config"
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/handler"
 	"xiagu-server/internal/repository"
 	"xiagu-server/internal/router"
@@ -50,7 +49,17 @@ func main() {
 	logger.Log.Info("峡谷寻城记 Go后端启动中...")
 
 	// 3. 连接MongoDB
-	mongoClient, err := initMongo(cfg.MongoDB)
+	mongoConnectContext, cancelMongoConnect := context.WithTimeout(
+		context.Background(),
+		cfg.MongoDB.ConnectTimeout,
+	)
+
+	mongoClient, err := database.ConnectMongo(
+		mongoConnectContext,
+		cfg.MongoDB,
+	)
+	cancelMongoConnect()
+
 	if err != nil {
 		log.Fatalf("MongoDB连接失败: %v", err)
 	}
@@ -150,20 +159,4 @@ func main() {
 	mongoClient.Disconnect(ctx)
 	rdb.Close()
 	logger.Log.Info("服务已关闭")
-}
-
-func initMongo(cfg config.MongoConfig) (*mongo.Client, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.ConnectTimeout)
-	defer cancel()
-
-	opts := options.Client().
-		ApplyURI(cfg.URI).
-		SetMaxPoolSize(cfg.MaxPoolSize).
-		SetMinPoolSize(cfg.MinPoolSize)
-
-	client, err := mongo.Connect(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-	return client, client.Ping(ctx, nil)
 }
