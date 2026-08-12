@@ -39,7 +39,11 @@ func main() {
 	if err := config.Load(cfgPath); err != nil {
 		log.Fatalf("加载配置失败: %v", err)
 	}
+
 	cfg := config.C
+	if err := cfg.Validate(); err != nil {
+		log.Fatalf("配置校验失败：%v", err)
+	}
 
 	// 2. 初始化日志
 	logger.Init(cfg.Server.Mode)
