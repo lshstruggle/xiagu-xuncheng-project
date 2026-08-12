@@ -63,7 +63,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("MongoDB连接失败: %v", err)
 	}
-	db := mongoClient.Database(cfg.MongoDB.Database)
+	mongoDatabase := mongoClient.Database(cfg.MongoDB.Database)
+	collections := database.NewCollections(
+		mongoDatabase,
+		cfg.MongoDB.CollectionPrefix,
+	)
 	logger.Log.Info("MongoDB 连接成功")
 
 	// 4. 连接Redis
@@ -120,12 +124,12 @@ func main() {
 	wechatAuth := wechat.NewAuth(cfg.WeChat.AppID, cfg.WeChat.AppSecret)
 
 	// 6. 初始化各层
-	repos := repository.NewRepos(db, rdb)
+	repos := repository.NewRepos(collections, rdb)
 	svcs, err := service.NewServices(repos, cfg, yuanqiClient, ttsClient, wechatAuth)
 	if err != nil {
 		log.Fatalf("初始化服务失败: %v", err)
 	}
-	handlers := handler.NewHandlers(svcs, db)
+	handlers := handler.NewHandlers(svcs, collections)
 
 	// 7. 创建Gin
 	engine := app.BuildEngine(cfg.Server.Mode)

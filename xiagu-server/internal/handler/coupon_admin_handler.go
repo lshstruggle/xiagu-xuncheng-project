@@ -10,17 +10,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 	"xiagu-server/pkg/util"
 )
 
 // CouponAdminHandler 优惠券管理接口
 type CouponAdminHandler struct {
-	db *mongo.Database
+	db *database.Collections
 }
 
 // NewCouponAdminHandler 创建处理器
-func NewCouponAdminHandler(db *mongo.Database) *CouponAdminHandler {
+func NewCouponAdminHandler(db *database.Collections) *CouponAdminHandler {
 	return &CouponAdminHandler{db: db}
 }
 
@@ -259,21 +260,21 @@ func (h *CouponAdminHandler) IssueCouponToUser(c *gin.Context) {
 	userCoupons := make([]interface{}, req.Count)
 	for i := 0; i < req.Count; i++ {
 		userCoupons[i] = bson.M{
-			"_id":          primitive.NewObjectID(),
-			"user_id":      req.UserID,
-			"coupon_def_id": id,
-			"name":         couponDef.Name,
-			"type":         couponDef.Type,
-			"sub_type":     couponDef.SubType,
-			"image":        couponDef.Image,
-			"discount_type": couponDef.DiscountType,
+			"_id":            primitive.NewObjectID(),
+			"user_id":        req.UserID,
+			"coupon_def_id":  id,
+			"name":           couponDef.Name,
+			"type":           couponDef.Type,
+			"sub_type":       couponDef.SubType,
+			"image":          couponDef.Image,
+			"discount_type":  couponDef.DiscountType,
 			"discount_value": couponDef.DiscountValue,
-			"min_amount":   couponDef.MinAmount,
-			"merchant_id":  couponDef.MerchantID,
-			"poi_ids":      couponDef.POIIDs,
-			"status":       "unused",
-			"created_at":   now,
-			"expire_at":    expireAt,
+			"min_amount":     couponDef.MinAmount,
+			"merchant_id":    couponDef.MerchantID,
+			"poi_ids":        couponDef.POIIDs,
+			"status":         "unused",
+			"created_at":     now,
+			"expire_at":      expireAt,
 		}
 	}
 

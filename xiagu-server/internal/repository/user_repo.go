@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 )
 
@@ -16,7 +17,7 @@ type UserRepo struct {
 	coll *mongo.Collection
 }
 
-func NewUserRepo(db *mongo.Database) *UserRepo {
+func NewUserRepo(db *database.Collections) *UserRepo {
 	return &UserRepo{coll: db.Collection("users")}
 }
 

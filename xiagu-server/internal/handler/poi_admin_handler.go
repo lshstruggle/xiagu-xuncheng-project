@@ -6,20 +6,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 	"xiagu-server/pkg/util"
 )
 
 // POIAdminHandler POI管理接口
 type POIAdminHandler struct {
-	db *mongo.Database
+	db *database.Collections
 }
 
 // NewPOIAdminHandler 创建处理器
-func NewPOIAdminHandler(db *mongo.Database) *POIAdminHandler {
+func NewPOIAdminHandler(db *database.Collections) *POIAdminHandler {
 	return &POIAdminHandler{db: db}
 }
 

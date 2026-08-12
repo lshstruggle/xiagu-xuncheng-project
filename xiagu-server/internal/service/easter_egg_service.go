@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"xiagu-server/internal/database"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -39,24 +40,24 @@ type GeoJSON struct {
 
 // UserEasterEggCollection 用户彩蛋收集记录
 type UserEasterEggCollection struct {
-	ID           string    `json:"id" bson:"_id,omitempty"`
-	UserID       string    `json:"user_id" bson:"user_id"`
-	EasterEggID  string    `json:"easter_egg_id" bson:"easter_egg_id"`
-	EasterEggName string   `json:"easter_egg_name" bson:"easter_egg_name"`
-	FragmentID   string    `json:"fragment_id" bson:"fragment_id"`
-	Rarity       string    `json:"rarity" bson:"rarity"`
-	CollectedAt  time.Time `json:"collected_at" bson:"collected_at"`
+	ID            string    `json:"id" bson:"_id,omitempty"`
+	UserID        string    `json:"user_id" bson:"user_id"`
+	EasterEggID   string    `json:"easter_egg_id" bson:"easter_egg_id"`
+	EasterEggName string    `json:"easter_egg_name" bson:"easter_egg_name"`
+	FragmentID    string    `json:"fragment_id" bson:"fragment_id"`
+	Rarity        string    `json:"rarity" bson:"rarity"`
+	CollectedAt   time.Time `json:"collected_at" bson:"collected_at"`
 }
 
 // EasterEggService 彩蛋服务
 type EasterEggService struct {
-	db                      *mongo.Database
-	easterEggCollection     *mongo.Collection
+	db                       *database.Collections
+	easterEggCollection      *mongo.Collection
 	userCollectionCollection *mongo.Collection
 }
 
 // NewEasterEggService 创建彩蛋服务
-func NewEasterEggService(db *mongo.Database) *EasterEggService {
+func NewEasterEggService(db *database.Collections) *EasterEggService {
 	return &EasterEggService{
 		db:                       db,
 		easterEggCollection:      db.Collection("easter_eggs"),
@@ -143,7 +144,7 @@ func (s *EasterEggService) CollectEasterEgg(ctx context.Context, userID, easterE
 
 	// 检查是否已收集
 	existingFilter := bson.M{
-		"user_id":      userID,
+		"user_id":       userID,
 		"easter_egg_id": easterEggID,
 	}
 	var existing UserEasterEggCollection

@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 )
 
@@ -15,7 +16,7 @@ type SessionRepo struct {
 	coll *mongo.Collection
 }
 
-func NewSessionRepo(db *mongo.Database) *SessionRepo {
+func NewSessionRepo(db *database.Collections) *SessionRepo {
 	return &SessionRepo{coll: db.Collection("ai_sessions")}
 }
 

@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 )
 
@@ -14,7 +15,7 @@ type CheckinRepo struct {
 	coll *mongo.Collection
 }
 
-func NewCheckinRepo(db *mongo.Database) *CheckinRepo {
+func NewCheckinRepo(db *database.Collections) *CheckinRepo {
 	return &CheckinRepo{coll: db.Collection("checkins")}
 }
 

@@ -1,8 +1,9 @@
 package repository
 
 import (
+	"xiagu-server/internal/database"
+
 	"github.com/redis/go-redis/v9"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Repos struct {
@@ -12,10 +13,10 @@ type Repos struct {
 	Session *SessionRepo
 	Route   *RouteRepo
 	Cache   *CacheRepo
-	DB      *mongo.Database // 直接暴露DB以便服务层使用
+	DB      *database.Collections // 直接暴露DB以便服务层使用
 }
 
-func NewRepos(db *mongo.Database, rdb *redis.Client) *Repos {
+func NewRepos(db *database.Collections, rdb *redis.Client) *Repos {
 	return &Repos{
 		User:    NewUserRepo(db),
 		POI:     NewPOIRepo(db),

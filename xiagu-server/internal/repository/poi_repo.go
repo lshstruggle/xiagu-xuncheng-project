@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 )
 
@@ -15,7 +16,7 @@ type POIRepo struct {
 	coll *mongo.Collection
 }
 
-func NewPOIRepo(db *mongo.Database) *POIRepo {
+func NewPOIRepo(db *database.Collections) *POIRepo {
 	return &POIRepo{coll: db.Collection("pois")}
 }
 

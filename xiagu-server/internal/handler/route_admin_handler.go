@@ -6,20 +6,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 	"xiagu-server/pkg/util"
 )
 
 // RouteAdminHandler 路线管理接口
 type RouteAdminHandler struct {
-	db *mongo.Database
+	db *database.Collections
 }
 
 // NewRouteAdminHandler 创建处理器
-func NewRouteAdminHandler(db *mongo.Database) *RouteAdminHandler {
+func NewRouteAdminHandler(db *database.Collections) *RouteAdminHandler {
 	return &RouteAdminHandler{db: db}
 }
 

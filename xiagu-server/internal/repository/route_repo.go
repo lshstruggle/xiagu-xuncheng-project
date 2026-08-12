@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 )
 
@@ -13,7 +14,7 @@ type RouteRepo struct {
 	coll *mongo.Collection
 }
 
-func NewRouteRepo(db *mongo.Database) *RouteRepo {
+func NewRouteRepo(db *database.Collections) *RouteRepo {
 	return &RouteRepo{coll: db.Collection("routes")}
 }
 

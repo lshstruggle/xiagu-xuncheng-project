@@ -7,20 +7,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 	"xiagu-server/pkg/util"
 )
 
 // UserAdminHandler 用户管理接口
 type UserAdminHandler struct {
-	db *mongo.Database
+	db *database.Collections
 }
 
 // NewUserAdminHandler 创建处理器
-func NewUserAdminHandler(db *mongo.Database) *UserAdminHandler {
+func NewUserAdminHandler(db *database.Collections) *UserAdminHandler {
 	return &UserAdminHandler{db: db}
 }
 
@@ -112,9 +112,9 @@ func (h *UserAdminHandler) BanUser(c *gin.Context) {
 		c,
 		bson.M{"_id": objectID},
 		bson.M{"$set": bson.M{
-			"status":      "banned",
-			"ban_reason":  req.Reason,
-			"banned_at":   primitive.NewDateTimeFromTime(time.Now()),
+			"status":     "banned",
+			"ban_reason": req.Reason,
+			"banned_at":  primitive.NewDateTimeFromTime(time.Now()),
 		}},
 	)
 	if err != nil {

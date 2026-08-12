@@ -10,16 +10,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/pkg/util"
 )
 
 // EasterEggAdminHandler 彩蛋管理接口
 type EasterEggAdminHandler struct {
-	db *mongo.Database
+	db *database.Collections
 }
 
 // NewEasterEggAdminHandler 创建处理器
-func NewEasterEggAdminHandler(db *mongo.Database) *EasterEggAdminHandler {
+func NewEasterEggAdminHandler(db *database.Collections) *EasterEggAdminHandler {
 	return &EasterEggAdminHandler{db: db}
 }
 
