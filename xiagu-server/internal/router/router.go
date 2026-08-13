@@ -110,15 +110,11 @@ func Setup(r *gin.Engine, h *handler.Handlers) {
 		auth.GET("/poi/:id", h.POI.GetDetail)
 		auth.GET("/route/list", h.POI.GetRoutes)
 
-		// AI对话（核心：元器+TTS联动）
+		// AI对话
 		auth.POST("/ai/chat", h.AI.Chat)
 
 		// 打卡
 		auth.POST("/checkin", h.Checkin.DoCheckin)
-
-		// TTS
-		auth.POST("/tts", h.TTS.Synthesize)
-		auth.GET("/tts/health", h.TTS.HealthCheck)
 
 		// 彩蛋系统
 		auth.GET("/easter-eggs", h.EasterEgg.GetEasterEggs)
@@ -126,12 +122,6 @@ func Setup(r *gin.Engine, h *handler.Handlers) {
 		auth.GET("/easter-eggs/:id", h.EasterEgg.GetEasterEggByID)
 		auth.POST("/easter-eggs/collect", h.EasterEgg.CollectEasterEgg)
 		auth.GET("/users/:user_id/easter-eggs", h.EasterEgg.GetUserEasterEggCollection)
-
-		// 回忆模式语音
-		auth.GET("/memory-tts", h.MemoryTTS.GetMemoryTTSList)
-		auth.GET("/memory-tts/:id", h.MemoryTTS.GetMemoryTTSByID)
-		auth.GET("/memory-tts/:id/audio", h.MemoryTTS.GetMemoryTTSAudio)
-		auth.GET("/memory-tts/:id/play", h.MemoryTTS.PlayMemoryTTS)
 
 		// 用户资产
 		auth.GET("/user/assets", h.User.GetAssets)

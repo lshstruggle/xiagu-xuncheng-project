@@ -12,12 +12,6 @@ mongodb:
   min_pool_size: 5
   connect_timeout: 10s
 
-redis:
-  addr: "localhost:6381"
-  password: ""
-  db: 0
-  pool_size: 50
-
 wechat:
   app_id: "your-wechat-app-id"
   app_secret: "your-wechat-app-secret"

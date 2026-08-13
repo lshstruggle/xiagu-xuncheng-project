@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/base64"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -10,7 +9,6 @@ import (
 	"xiagu-server/internal/config"
 	"xiagu-server/internal/model"
 	"xiagu-server/internal/repository"
-	"xiagu-server/pkg/external/sovits"
 	"xiagu-server/pkg/external/yuanqi"
 	"xiagu-server/pkg/logger"
 )
@@ -21,11 +19,10 @@ type AIService struct {
 	repos  *repository.Repos
 	cfg    *config.Config
 	yuanqi *yuanqi.Client
-	tts    *sovits.Client
 }
 
-func NewAIService(repos *repository.Repos, cfg *config.Config, yq *yuanqi.Client, tts *sovits.Client) *AIService {
-	return &AIService{repos: repos, cfg: cfg, yuanqi: yq, tts: tts}
+func NewAIService(repos *repository.Repos, cfg *config.Config, yq *yuanqi.Client) *AIService {
+	return &AIService{repos: repos, cfg: cfg, yuanqi: yq}
 }
 
 // === 请求/响应 ===
@@ -117,21 +114,6 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 		Mode:       req.Mode,
 	}
 
-	// 7. TTS
-	// 使用独立 context，不受 HTTP 请求超时影响，后台继续合成并缓存
-	if req.NeedTTS {
-		ttsCtx, ttsCancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer ttsCancel()
-
-		audioData, err := s.tts.Synthesize(ttsCtx, reply)
-		if err == nil && len(audioData) > 0 {
-			resp.AudioBase64 = base64.StdEncoding.EncodeToString(audioData)
-			resp.AudioReady = true
-		} else if err != nil {
-			logger.Log.Warnf("[TTS] 语音合成失败: %v", err)
-		}
-	}
-
 	return resp, nil
 }
 
@@ -180,10 +162,10 @@ func (s *AIService) buildPOIContext(poi *model.POI, heroID string) string {
 func (s *AIService) recentValidMessages(msgs []model.ChatMessage, maxMsgs int) []model.ChatMessage {
 	fallbackReply := s.fallbackReply()
 	maxContentLen := 200 // 单条消息最大长度
-	
+
 	// 找到最后N对完整的user-assistant对话（过滤掉降级回复）
 	pairs := []model.ChatMessage{}
-	
+
 	for i := len(msgs) - 1; i >= 1; i-- {
 		if msgs[i].Role == "assistant" && msgs[i-1].Role == "user" {
 			// 跳过降级回复
@@ -191,7 +173,7 @@ func (s *AIService) recentValidMessages(msgs []model.ChatMessage, maxMsgs int) [
 				i-- // 跳过这对消息
 				continue
 			}
-			
+
 			// 截断过长的消息
 			userContent := msgs[i-1].Content
 			assistContent := msgs[i].Content
@@ -201,7 +183,7 @@ func (s *AIService) recentValidMessages(msgs []model.ChatMessage, maxMsgs int) [
 			if len(assistContent) > maxContentLen {
 				assistContent = assistContent[:maxContentLen] + "..."
 			}
-			
+
 			// 倒序添加，最后会反转
 			pairs = append(pairs, model.ChatMessage{Role: "assistant", Content: assistContent})
 			pairs = append(pairs, model.ChatMessage{Role: "user", Content: userContent})

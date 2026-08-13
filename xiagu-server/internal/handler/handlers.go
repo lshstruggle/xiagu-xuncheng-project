@@ -10,7 +10,6 @@ type Handlers struct {
 	AI        *AIHandler
 	Checkin   *CheckinHandler
 	POI       *POIHandler
-	TTS       *TTSHandler
 	EasterEgg *EasterEggHandler
 	MemoryTTS *MemoryTTSHandler
 	Shop      *ShopHandler
@@ -25,9 +24,7 @@ func NewHandlers(svcs *service.Services, db *database.Collections) *Handlers {
 		AI:        &AIHandler{svcs: svcs},
 		Checkin:   &CheckinHandler{svcs: svcs},
 		POI:       &POIHandler{svcs: svcs},
-		TTS:       &TTSHandler{svcs: svcs},
 		EasterEgg: NewEasterEggHandler(svcs.EasterEgg),
-		MemoryTTS: NewMemoryTTSHandler(svcs.MemoryTTS),
 		Shop:      NewShopHandler(svcs.Shop),
 		Bond:      NewBondHandler(svcs),
 		Merch:     NewMerchHandler(svcs.Merch),

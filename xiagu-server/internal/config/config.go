@@ -10,7 +10,6 @@ import (
 type Config struct {
 	Server  ServerConfig `mapstructure:"server"`
 	MongoDB MongoConfig  `mapstructure:"mongodb"`
-	Redis   RedisConfig  `mapstructure:"redis"`
 	WeChat  WeChatConfig `mapstructure:"wechat"`
 	JWT     JWTConfig    `mapstructure:"jwt"`
 	Yuanqi  YuanqiConfig `mapstructure:"yuanqi"`
@@ -31,13 +30,6 @@ type MongoConfig struct {
 	MaxPoolSize      uint64        `mapstructure:"max_pool_size"`
 	MinPoolSize      uint64        `mapstructure:"min_pool_size"`
 	ConnectTimeout   time.Duration `mapstructure:"connect_timeout"`
-}
-
-type RedisConfig struct {
-	Addr     string `mapstructure:"addr"`
-	Password string `mapstructure:"password"`
-	DB       int    `mapstructure:"db"`
-	PoolSize int    `mapstructure:"pool_size"`
 }
 
 type WeChatConfig struct {
