@@ -91,6 +91,19 @@ func main() {
 	// 6. 创建Gin
 	engine := app.BuildEngine(cfg.Server.Mode)
 
+	app.RegisterReadiness(
+		engine,
+		func(requestContext context.Context) error {
+			pingContext, cancelPing := context.WithTimeout(
+				requestContext,
+				2*time.Second,
+			)
+			defer cancelPing()
+
+			return mongoClient.Ping(pingContext, nil)
+		},
+	)
+
 	// 7. 注册路由
 	router.Setup(engine, handlers)
 
