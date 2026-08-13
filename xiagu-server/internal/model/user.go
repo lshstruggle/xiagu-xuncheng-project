@@ -32,6 +32,11 @@ type User struct {
 
 	CreatedAt time.Time `bson:"created_at" json:"created_at"`
 	UpdatedAt time.Time `bson:"updated_at" json:"updated_at"`
+
+	Status      string     `bson:"status" json:"status"`
+	BanReason   string     `bson:"ban_reason,omitempty" json:"-"`
+	BannedAt    *time.Time `bson:"banned_at,omitempty" json:"-"`
+	LastLoginAt time.Time  `bson:"last_login_at" json:"last_login_at"`
 }
 
 type HeroBond struct {

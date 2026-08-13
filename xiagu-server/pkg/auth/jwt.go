@@ -28,15 +28,25 @@ func GenerateJWT(userID, openID, secret string, expireHours int) (string, error)
 }
 
 func ParseJWT(tokenString, secret string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(t *jwt.Token) (interface{}, error) {
-		return []byte(secret), nil
-	})
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&Claims{},
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(secret), nil
+		},
+		jwt.WithValidMethods([]string{
+			jwt.SigningMethodHS256.Alg(),
+		}),
+		jwt.WithIssuer("xiagu-xuncheng"),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		return claims, nil
+	claims, ok := token.Claims.(*Claims)
+	if !ok || !token.Valid {
+		return nil, jwt.ErrSignatureInvalid
 	}
-	return nil, jwt.ErrSignatureInvalid
+
+	return claims, nil
 }

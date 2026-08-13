@@ -65,6 +65,18 @@ func main() {
 		mongoDatabase,
 		cfg.MongoDB.CollectionPrefix,
 	)
+	indexContext, cancelIndexes := context.WithTimeout(
+		context.Background(),
+		cfg.MongoDB.ConnectTimeout,
+	)
+	if err := database.EnsureCoreIndexes(
+		indexContext,
+		collections,
+	); err != nil {
+		cancelIndexes()
+		log.Fatalf("创建数据库索引失败: %v", err)
+	}
+	cancelIndexes()
 	logger.Log.Info("MongoDB 连接成功")
 
 	// 4. 初始化外部客户端
@@ -105,7 +117,7 @@ func main() {
 	)
 
 	// 7. 注册路由
-	router.Setup(engine, handlers)
+	router.Setup(engine, handlers, repos.User)
 
 	// 8. 启动
 	srv := &http.Server{

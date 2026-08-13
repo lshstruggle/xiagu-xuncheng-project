@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
@@ -132,4 +133,91 @@ func (r *UserRepo) UpdateAfterCheckin(ctx context.Context, userID string, u *Che
 
 	_, err := r.coll.UpdateOne(ctx, bson.M{"_id": oid}, update)
 	return err
+}
+
+func (r *UserRepo) FindOrCreateByOpenID(
+	ctx context.Context,
+	openID string,
+) (*model.User, error) {
+	now := time.Now()
+
+	update := bson.M{
+		"$set": bson.M{
+			"updated_at":    now,
+			"last_login_at": now,
+		},
+		"$setOnInsert": bson.M{
+			"openid":          openID,
+			"nickname":        "召唤师",
+			"status":          "active",
+			"current_hero_id": "libai",
+			"hero_bonds":      map[string]*model.HeroBond{},
+			"explored_cities": map[string]*model.CityProgress{},
+			"badges":          []string{},
+			"spirit_badges":   []string{},
+			"bond_bookmarks":  []string{},
+			"knowledge_cards": []string{},
+			"coupons":         []model.UserCoupon{},
+			"created_at":      now,
+		},
+	}
+
+	opts := options.FindOneAndUpdate().
+		SetUpsert(true).
+		SetReturnDocument(options.After)
+
+	var user model.User
+	err := r.coll.FindOneAndUpdate(
+		ctx,
+		bson.M{"openid": openID},
+		update,
+		opts,
+	).Decode(&user)
+	if err == nil {
+		return &user, nil
+	}
+
+	if !mongo.IsDuplicateKeyError(err) {
+		return nil, fmt.Errorf("find or create user: %w", err)
+	}
+
+	// 另一个并发请求已经创建了相同 openid 的用户。
+	if retryErr := r.coll.FindOne(
+		ctx,
+		bson.M{"openid": openID},
+	).Decode(&user); retryErr != nil {
+		return nil, fmt.Errorf(
+			"load user after concurrent create: %w",
+			retryErr,
+		)
+	}
+
+	return &user, nil
+}
+
+func (r *UserRepo) GetStatusByID(
+	ctx context.Context,
+	userID string,
+) (string, error) {
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return "", fmt.Errorf("parse user ID: %w", err)
+	}
+
+	var result struct {
+		Status string `bson:"status"`
+	}
+
+	err = r.coll.FindOne(
+		ctx,
+		bson.M{"_id": objectID},
+		options.FindOne().SetProjection(
+			bson.M{"status": 1},
+		),
+	).Decode(&result)
+	if err != nil {
+		return "", fmt.Errorf("find user status: %w", err)
+	}
+
+	return result.Status, nil
 }

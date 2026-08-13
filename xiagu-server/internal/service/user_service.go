@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"xiagu-server/internal/config"
@@ -10,6 +11,8 @@ import (
 	"xiagu-server/pkg/auth"
 	"xiagu-server/pkg/external/wechat"
 )
+
+var ErrUserBanned = errors.New("user banned")
 
 type UserService struct {
 	repos  *repository.Repos
@@ -34,24 +37,16 @@ func (s *UserService) Login(ctx context.Context, code string) (*LoginResp, error
 	}
 
 	// 2. 查找或创建用户
-	user, err := s.repos.User.GetByOpenID(ctx, wxResp.OpenID)
+	user, err := s.repos.User.FindOrCreateByOpenID(
+		ctx,
+		wxResp.OpenID,
+	)
 	if err != nil {
-		// 新用户
-		user = &model.User{
-			OpenID:         wxResp.OpenID,
-			Nickname:       "召唤师",
-			CurrentHeroID:  "libai",
-			HeroBonds:      map[string]*model.HeroBond{},
-			ExploredCities: map[string]*model.CityProgress{},
-			Badges:         []string{},
-			SpiritBadges:   []string{},
-			BondBookmarks:  []string{},
-			KnowledgeCards: []string{},
-			Coupons:        []model.UserCoupon{},
-		}
-		if err := s.repos.User.Create(ctx, user); err != nil {
-			return nil, err
-		}
+		return nil, err
+	}
+
+	if user.Status == "banned" {
+		return nil, ErrUserBanned
 	}
 
 	// 3. 生成JWT

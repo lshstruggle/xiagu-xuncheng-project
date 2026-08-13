@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -10,28 +11,42 @@ import (
 	"xiagu-server/pkg/util"
 )
 
-func Auth() gin.HandlerFunc {
+type UserStatusReader interface {
+	GetStatusByID(ctx context.Context, userID string) (string, error)
+}
+
+func Auth(users UserStatusReader) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		header := c.GetHeader("Authorization")
-		if header == "" {
-			util.Unauthorized(c, "未提供认证信息")
+		parts := strings.Fields(c.GetHeader("Authorization"))
+		if len(parts) != 2 ||
+			!strings.EqualFold(parts[0], "Bearer") ||
+			parts[1] == "" {
+			util.Unauthorized(c, "未提供有效认证信息")
 			c.Abort()
 			return
 		}
 
-		token := strings.TrimPrefix(header, "Bearer ")
-
-		// 调试模式：支持测试token
-		if strings.Contains(token, "test_token_for_debug") {
-			c.Set("user_id", "debug_user_001")
-			c.Set("openid", "debug_openid_001")
-			c.Next()
+		claims, err := auth.ParseJWT(
+			parts[1],
+			config.C.JWT.Secret,
+		)
+		if err != nil ||
+			claims.UserID == "" ||
+			claims.OpenID == "" {
+			util.Unauthorized(c, "认证无效或已过期")
+			c.Abort()
 			return
 		}
 
-		claims, err := auth.ParseJWT(token, config.C.JWT.Secret)
+		status, err := users.GetStatusByID(c.Request.Context(), claims.UserID)
 		if err != nil {
-			util.Unauthorized(c, "认证无效或已过期")
+			util.ResponseError(c, 503, "认证服务暂不可用")
+			c.Abort()
+			return
+		}
+
+		if status == "banned" {
+			util.Forbidden(c, "用户已被封禁")
 			c.Abort()
 			return
 		}

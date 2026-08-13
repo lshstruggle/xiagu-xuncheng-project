@@ -7,7 +7,7 @@ import (
 	"xiagu-server/internal/middleware"
 )
 
-func Setup(r *gin.Engine, h *handler.Handlers) {
+func Setup(r *gin.Engine, h *handler.Handlers, users middleware.UserStatusReader) {
 
 	v1 := r.Group("/api/v1")
 
@@ -98,7 +98,7 @@ func Setup(r *gin.Engine, h *handler.Handlers) {
 
 	// 需要登录
 	auth := v1.Group("")
-	auth.Use(middleware.Auth())
+	auth.Use(middleware.Auth(users))
 	{
 		// 用户
 		auth.GET("/user/profile", h.User.GetProfile)
