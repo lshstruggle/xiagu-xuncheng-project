@@ -117,7 +117,7 @@ func main() {
 	)
 
 	// 7. 注册路由
-	router.Setup(engine, handlers, repos.User)
+	router.Setup(engine, handlers, repos.User, cfg.JWT.Secret)
 
 	// 8. 启动
 	srv := &http.Server{

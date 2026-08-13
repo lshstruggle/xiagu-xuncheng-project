@@ -7,7 +7,7 @@ import (
 	"xiagu-server/internal/middleware"
 )
 
-func Setup(r *gin.Engine, h *handler.Handlers, users middleware.UserStatusReader) {
+func Setup(r *gin.Engine, h *handler.Handlers, users middleware.UserStatusReader, jwtSecret string) {
 
 	v1 := r.Group("/api/v1")
 
@@ -15,7 +15,7 @@ func Setup(r *gin.Engine, h *handler.Handlers, users middleware.UserStatusReader
 	v1.POST("/user/login", h.User.Login)
 
 	// ===== 管理员接口（新增）=====
-	adminHandler := handler.NewAdminHandler()
+	adminHandler := handler.NewAdminHandler(h.DB, jwtSecret)
 	poiAdminHandler := handler.NewPOIAdminHandler(h.DB)
 	merchantAdminHandler := handler.NewMerchantAdminHandler(h.DB)
 	couponAdminHandler := handler.NewCouponAdminHandler(h.DB)
@@ -28,7 +28,7 @@ func Setup(r *gin.Engine, h *handler.Handlers, users middleware.UserStatusReader
 
 	// 管理员接口组（需要管理员认证）
 	admin := v1.Group("/admin")
-	admin.Use(middleware.AdminAuth())
+	admin.Use(middleware.AdminAuth(jwtSecret))
 	{
 		// 认证
 		admin.POST("/logout", adminHandler.Logout)
