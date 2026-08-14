@@ -1,13 +1,5 @@
 import Taro from '@tarojs/taro'
 
-// 开发环境配置
-// 微信开发者工具模拟器用 localhost
-// const BASE_URL = 'http://localhost:8080/api/v1'
-// 真机调试用局域网 IP（确保手机和电脑同一 WiFi）
-// const BASE_URL = 'http://192.168.31.177:8080/api/v1'
-// 体验版/真机调试用 ngrok
-// const BASE_URL = 'https://preceptively-unushered-elvira.ngrok-free.dev/api/v1'
-
 // ========== 云存储配置（微信云开发）==========
 // 使用微信云存储托管语音文件，无需配置微信域名白名单
 // 文件ID格式: cloud://环境ID/路径/文件名
@@ -22,50 +14,93 @@ const MEMORY_TTS_CLOUD_URLS: Record<string, string> = {
 }
 
 // API基础URL（云存储模式下主要用于其他API调用）
-const BASE_URL = 'http://localhost:8080/api/v1'
+const BASE_URL = 'https://xiagu-miniprogram-d7dbpz54358b2f-1410097615.ap-shanghai.app.tcloudbase.com/api/v1'
 
-// 调试模式：设置一个测试token（开发时使用）
-const DEBUG_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjI3Yjc0YjY1ZTU4ZDYzNDcwMDAwMDAxIiwiZXhwIjoxODg4ODg4ODg4fQ.test_token_for_debug'
+type LoginResult = { token: string; user: any }
+
+let loginPromise: Promise<LoginResult> | null = null
+
+async function loginWithWechat(): Promise<LoginResult> {
+  const loginRes = await Taro.login()
+  if (!loginRes.code) {
+    throw new Error('微信登录失败')
+  }
+
+  const result = await request<LoginResult>(
+    '/user/login',
+    'POST',
+    { code: loginRes.code },
+    false,
+  )
+  Taro.setStorageSync('token', result.token)
+  Taro.setStorageSync('user', result.user)
+  return result
+}
+
+/**
+ * Ensure all concurrently-started protected requests wait for the same login.
+ * This prevents page useDidShow hooks from racing the initial WeChat login.
+ */
+export async function ensureLogin(): Promise<LoginResult> {
+  const token = Taro.getStorageSync('token')
+  if (token) {
+    return { token, user: Taro.getStorageSync('user') }
+  }
+
+  if (!loginPromise) {
+    loginPromise = loginWithWechat().finally(() => {
+      loginPromise = null
+    })
+  }
+  return loginPromise
+}
+
 
 // 统一请求方法
 async function request<T>(
   url: string, 
   method: 'GET' | 'POST' | 'PUT', 
-  data?: any
+  data?: any,
+  requiresAuth = true,
+  retriedAfterLogin = false,
 ): Promise<T> {
-  // 优先使用存储的token，否则使用调试token（开发模式）
   let token = Taro.getStorageSync('token')
-  // 如果存储的token已过期（非debug token且无法被后端解析），回退到debug token
-  if (!token || (token !== DEBUG_TOKEN && !token.includes('test_token_for_debug'))) {
-    // 检查真实token是否过期（简单判断：JWT payload中的exp）
-    try {
-      if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        if (payload.exp && payload.exp * 1000 < Date.now()) {
-          Taro.removeStorageSync('token') // 清除过期token
-          token = ''
-        }
-      }
-    } catch {}
+  if (requiresAuth && !token) {
+    token = (await ensureLogin()).token
   }
-  token = token || DEBUG_TOKEN
+
+  const header: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  if (token) {
+    header.Authorization = `Bearer ${token}`
+  }
 
   const res = await Taro.request({
     url: `${BASE_URL}${url}`,
     method,
     data,
-    timeout: 60000,  // 微信小程序请求上限 60 秒
-    header: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
+    timeout: 60000,
+    header,
   })
 
-  if (res.data.code !== 0) {
-    throw new Error(res.data.message || '请求失败')
+  const response = res.data as { code: number; message?: string; data: T }
+  const unauthorized = res.statusCode === 401 || response.code === 401
+  if (requiresAuth && unauthorized && !retriedAfterLogin) {
+    // Do not delete a newer token written by another concurrent retry.
+    if (Taro.getStorageSync('token') === token) {
+      Taro.removeStorageSync('token')
+    }
+    await ensureLogin()
+    return request<T>(url, method, data, true, true)
   }
 
-  return res.data.data
+  if (response.code !== 0) {
+    throw new Error(response.message || '请求失败')
+  }
+
+  return response.data
 }
 
 // ======== API 方法 ========
@@ -73,7 +108,7 @@ async function request<T>(
 export const api = {
   // 登录
   login: (code: string) =>
-    request<{ token: string; user: any }>('/user/login', 'POST', { code }),
+    request<LoginResult>('/user/login', 'POST', { code }, false),
 
   // 用户
   getProfile: () =>
