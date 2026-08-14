@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 
 	"xiagu-server/internal/database"
@@ -18,7 +17,7 @@ import (
 
 // AdminHandler 管理员接口处理器
 type AdminHandler struct {
-	collection *mongo.Collection
+	collection *database.Collection
 	jwtSecret  string
 }
 
@@ -61,7 +60,7 @@ func (h *AdminHandler) Login(c *gin.Context) {
 		},
 	).Decode(&admin)
 
-	if errors.Is(err, mongo.ErrNoDocuments) {
+	if errors.Is(err, database.ErrDocumentNotFound) {
 		util.ResponseError(
 			c,
 			http.StatusUnauthorized,

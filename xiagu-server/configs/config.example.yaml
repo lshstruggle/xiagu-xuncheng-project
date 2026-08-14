@@ -4,13 +4,13 @@ server:
   allowed_admin_origins:
     - "http://localhost:5173"
 
-mongodb:
-  uri: "mongodb://localhost:27018"
-  database: "xiagu_xuncheng"
+cloudbase_database:
+  environment_id: "your-cloudbase-environment-id"
+  # api_key 必须在运行环境中通过 CLOUDBASE_API_KEY 注入，不写入配置文件。
+  instance: "(default)"
+  database: "(default)"
   collection_prefix: ""
-  max_pool_size: 20
-  min_pool_size: 5
-  connect_timeout: 10s
+  timeout: 10s
 
 wechat:
   app_id: "your-wechat-app-id"
@@ -22,7 +22,6 @@ jwt:
 
 yuanqi:
   base_url: "https://open.hunyuan.tencent.com/openapi/v1/agent/chat/completions"
-  token: "your-yuanqi-token"
   assistant_id: "your-assistant-id"
   timeout: 15s
   max_retries: 2
@@ -49,4 +48,3 @@ lbs:
   default_trigger_radius: 80
   distance_tolerance: 1.2
   checkin_cooldown: 86400
-

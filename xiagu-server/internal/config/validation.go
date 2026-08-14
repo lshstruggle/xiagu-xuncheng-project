@@ -18,14 +18,13 @@ func (c *Config) Validate() error {
 		name  string
 		value string
 	}{
-		{name: "mongodb.uri", value: c.MongoDB.URI},
-		{name: "mongodb.database", value: c.MongoDB.Database},
+		{name: "cloudbase_database.environment_id", value: c.CloudBaseDatabase.EnvironmentID},
+		{name: "cloudbase_database.api_key", value: c.CloudBaseDatabase.APIKey},
+		{name: "cloudbase_database.instance", value: c.CloudBaseDatabase.Instance},
+		{name: "cloudbase_database.database", value: c.CloudBaseDatabase.Database},
 		{name: "wechat.app_id", value: c.WeChat.AppID},
 		{name: "wechat.app_secret", value: c.WeChat.AppSecret},
 		{name: "jwt.secret", value: c.JWT.Secret},
-		{name: "yuanqi.base_url", value: c.Yuanqi.BaseURL},
-		{name: "yuanqi.token", value: c.Yuanqi.Token},
-		{name: "yuanqi.assistant_id", value: c.Yuanqi.AssistantID},
 	}
 
 	for _, required := range requiredValues {
@@ -50,18 +49,8 @@ func (c *Config) Validate() error {
 		return errors.New("server.port must be between 1 and 65535")
 	}
 
-	if c.MongoDB.MaxPoolSize == 0 {
-		return errors.New("mongodb.max_pool_size must be greater than 0")
-	}
-
-	if c.MongoDB.MinPoolSize > c.MongoDB.MaxPoolSize {
-		return errors.New(
-			"mongodb.min_pool_size must not exceed mongodb.max_pool_size",
-		)
-	}
-
-	if c.MongoDB.ConnectTimeout <= 0 {
-		return errors.New("mongodb.connect_timeout must be greater than 0")
+	if c.CloudBaseDatabase.Timeout <= 0 {
+		return errors.New("cloudbase_database.timeout must be greater than 0")
 	}
 
 	if len(c.JWT.Secret) < 32 {

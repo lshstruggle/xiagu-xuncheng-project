@@ -2,12 +2,13 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
+
 	"xiagu-server/internal/database"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -52,8 +53,8 @@ type UserEasterEggCollection struct {
 // EasterEggService 彩蛋服务
 type EasterEggService struct {
 	db                       *database.Collections
-	easterEggCollection      *mongo.Collection
-	userCollectionCollection *mongo.Collection
+	easterEggCollection      *database.Collection
+	userCollectionCollection *database.Collection
 }
 
 // NewEasterEggService 创建彩蛋服务
@@ -95,7 +96,7 @@ func (s *EasterEggService) GetEasterEggByID(ctx context.Context, id string) (*Ea
 	var egg EasterEgg
 	err := s.easterEggCollection.FindOne(ctx, filter).Decode(&egg)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, database.ErrDocumentNotFound) {
 			return nil, fmt.Errorf("彩蛋不存在")
 		}
 		return nil, err
@@ -200,7 +201,7 @@ func (s *EasterEggService) CheckUserHasCollected(ctx context.Context, userID, ea
 	var existing UserEasterEggCollection
 	err := s.userCollectionCollection.FindOne(ctx, filter).Decode(&existing)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, database.ErrDocumentNotFound) {
 			return false, nil
 		}
 		return false, err

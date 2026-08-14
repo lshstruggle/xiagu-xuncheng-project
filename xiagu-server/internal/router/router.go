@@ -135,5 +135,21 @@ func Setup(r *gin.Engine, h *handler.Handlers, users middleware.UserStatusReader
 
 		// 实体周边订单
 		auth.POST("/merch/order", h.Merch.SubmitOrder)
+
+		// Boss挑战（服务端校验距离、完成阈值、冷却与奖励）
+		auth.GET("/challenge/progress", h.Challenge.ListProgress)
+		auth.POST("/challenge/boss/complete", h.Challenge.CompleteBoss)
+
+		// 成就（从云端权威进度计算并持久化已解锁状态）
+		auth.GET("/achievements", h.Achievement.Get)
+		auth.POST("/route/complete", h.RouteProgress.Complete)
+		// 剧情进度（服务端权威状态与奖励）
+		auth.GET("/story/:story_id", h.Story.GetDefinition)
+		auth.GET("/story/:story_id/progress", h.Story.GetProgress)
+		auth.POST("/story/:story_id/start", h.Story.Start)
+		auth.POST("/story/:story_id/advance", h.Story.Advance)
+		auth.POST("/story/:story_id/pause", h.Story.Pause)
+		auth.POST("/story/:story_id/resume", h.Story.Resume)
+		auth.POST("/story/:story_id/reset", h.Story.Reset)
 	}
 }

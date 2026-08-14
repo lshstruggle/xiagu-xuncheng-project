@@ -10,6 +10,7 @@ type Checkin struct {
 	ID              primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	UserID          string             `bson:"user_id" json:"user_id"`
 	POIID           string             `bson:"poi_id" json:"poi_id"`
+	POICode         string             `bson:"poi_code" json:"poi_code"`
 	POIName         string             `bson:"poi_name" json:"poi_name"`
 	CityCode        string             `bson:"city_code" json:"city_code"`
 	Location        GeoPoint           `bson:"location" json:"location"`

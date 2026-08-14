@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Starting xiagu-api-cli-smoke on 0.0.0.0:9000"
+exec /var/user/main

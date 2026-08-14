@@ -14,6 +14,8 @@ const (
 	POITower            POIType = "tower"
 	POISpiritLighthouse POIType = "spirit_lighthouse"
 	POIPlayerFootprint  POIType = "player_footprint"
+	POIClub             POIType = "club"
+	POIArena            POIType = "arena"
 )
 
 type GeoPoint struct {
@@ -23,6 +25,7 @@ type GeoPoint struct {
 
 type POI struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	POICode       string             `bson:"poi_code" json:"poiCode"`
 	CityCode      string             `bson:"city_code" json:"cityCode"`
 	Name          string             `bson:"name" json:"name"`
 	Type          POIType            `bson:"type" json:"type"`
@@ -46,8 +49,17 @@ type POI struct {
 }
 
 type POIReward struct {
-	BondValue int          `bson:"bond_value" json:"bondValue"`
-	Items     []RewardItem `bson:"items,omitempty" json:"items,omitempty"`
+	BondValue int                   `bson:"bond_value" json:"bondValue"`
+	Items     []RewardItem          `bson:"items,omitempty" json:"items,omitempty"`
+	Fragments *FragmentRewardConfig `bson:"fragments,omitempty" json:"fragments,omitempty"`
+}
+
+// FragmentRewardConfig is the authoritative fragment reward stored with a POI.
+// The service never generates fragment amounts locally.
+type FragmentRewardConfig struct {
+	HeroFragments          int `bson:"hero_fragments" json:"heroFragments"`
+	SkinFragments          int `bson:"skin_fragments" json:"skinFragments"`
+	FirstCheckinMultiplier int `bson:"first_checkin_multiplier" json:"firstCheckinMultiplier"`
 }
 
 type RewardItem struct {

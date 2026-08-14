@@ -1,7 +1,11 @@
 package util
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
+
+	"xiagu-server/pkg/errcode"
 )
 
 type R struct {
@@ -29,4 +33,16 @@ func ResponseError(c *gin.Context, code int, message string) {
 
 func Forbidden(c *gin.Context, msg string) {
 	c.JSON(403, R{403, msg, nil})
+}
+
+func AppError(c *gin.Context, err error) bool {
+	var applicationError *errcode.AppError
+	if !errors.As(err, &applicationError) {
+		return false
+	}
+	c.JSON(applicationError.HTTPCode, R{
+		Code:    applicationError.Code,
+		Message: applicationError.Message,
+	})
+	return true
 }

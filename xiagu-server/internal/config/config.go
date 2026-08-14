@@ -8,13 +8,13 @@ import (
 )
 
 type Config struct {
-	Server  ServerConfig `mapstructure:"server"`
-	MongoDB MongoConfig  `mapstructure:"mongodb"`
-	WeChat  WeChatConfig `mapstructure:"wechat"`
-	JWT     JWTConfig    `mapstructure:"jwt"`
-	Yuanqi  YuanqiConfig `mapstructure:"yuanqi"`
-	TTS     TTSConfig    `mapstructure:"tts"`
-	LBS     LBSConfig    `mapstructure:"lbs"`
+	Server            ServerConfig            `mapstructure:"server"`
+	CloudBaseDatabase CloudBaseDatabaseConfig `mapstructure:"cloudbase_database"`
+	WeChat            WeChatConfig            `mapstructure:"wechat"`
+	JWT               JWTConfig               `mapstructure:"jwt"`
+	Yuanqi            YuanqiConfig            `mapstructure:"yuanqi"`
+	TTS               TTSConfig               `mapstructure:"tts"`
+	LBS               LBSConfig               `mapstructure:"lbs"`
 }
 
 type ServerConfig struct {
@@ -23,13 +23,14 @@ type ServerConfig struct {
 	AllowedAdminOrigins []string `mapstructure:"allowed_admin_origins"`
 }
 
-type MongoConfig struct {
-	URI              string        `mapstructure:"uri"`
+type CloudBaseDatabaseConfig struct {
+	EnvironmentID    string        `mapstructure:"environment_id"`
+	APIKey           string        `mapstructure:"api_key"`
+	Instance         string        `mapstructure:"instance"`
 	Database         string        `mapstructure:"database"`
 	CollectionPrefix string        `mapstructure:"collection_prefix"`
-	MaxPoolSize      uint64        `mapstructure:"max_pool_size"`
-	MinPoolSize      uint64        `mapstructure:"min_pool_size"`
-	ConnectTimeout   time.Duration `mapstructure:"connect_timeout"`
+	BaseURL          string        `mapstructure:"base_url"`
+	Timeout          time.Duration `mapstructure:"timeout"`
 }
 
 type WeChatConfig struct {
@@ -44,7 +45,6 @@ type JWTConfig struct {
 
 type YuanqiConfig struct {
 	BaseURL     string        `mapstructure:"base_url"`
-	Token       string        `mapstructure:"token"`
 	AssistantID string        `mapstructure:"assistant_id"`
 	Timeout     time.Duration `mapstructure:"timeout"`
 	MaxRetries  int           `mapstructure:"max_retries"`
@@ -115,9 +115,12 @@ func bindCloudEnvironment(v *viper.Viper) error {
 		{configKey: "server.mode", envKey: "SERVER_MODE"},
 		{configKey: "server.allowed_admin_origins", envKey: "ALLOWED_ADMIN_ORIGINS"},
 
-		{configKey: "mongodb.uri", envKey: "MONGODB_URI"},
-		{configKey: "mongodb.database", envKey: "MONGODB_DATABASE"},
-		{configKey: "mongodb.collection_prefix", envKey: "MONGODB_COLLECTION_PREFIX"},
+		{configKey: "cloudbase_database.environment_id", envKey: "CLOUDBASE_ENV_ID"},
+		{configKey: "cloudbase_database.api_key", envKey: "CLOUDBASE_API_KEY"},
+		{configKey: "cloudbase_database.instance", envKey: "CLOUDBASE_DATABASE_INSTANCE"},
+		{configKey: "cloudbase_database.database", envKey: "CLOUDBASE_DATABASE_NAME"},
+		{configKey: "cloudbase_database.collection_prefix", envKey: "CLOUDBASE_COLLECTION_PREFIX"},
+		{configKey: "cloudbase_database.base_url", envKey: "CLOUDBASE_DATABASE_BASE_URL"},
 
 		{configKey: "wechat.app_id", envKey: "WECHAT_APP_ID"},
 		{configKey: "wechat.app_secret", envKey: "WECHAT_APP_SECRET"},
@@ -125,7 +128,6 @@ func bindCloudEnvironment(v *viper.Viper) error {
 		{configKey: "jwt.secret", envKey: "JWT_SECRET"},
 
 		{configKey: "yuanqi.base_url", envKey: "YUANQI_BASE_URL"},
-		{configKey: "yuanqi.token", envKey: "YUANQI_TOKEN"},
 		{configKey: "yuanqi.assistant_id", envKey: "YUANQI_ASSISTANT_ID"},
 	}
 
@@ -146,9 +148,9 @@ func setServerlessDefaults(v *viper.Viper) {
 	v.SetDefault("server.port", 9000)
 	v.SetDefault("server.mode", "release")
 
-	v.SetDefault("mongodb.max_pool_size", 10)
-	v.SetDefault("mongodb.min_pool_size", 0)
-	v.SetDefault("mongodb.connect_timeout", 10*time.Second)
+	v.SetDefault("cloudbase_database.instance", "(default)")
+	v.SetDefault("cloudbase_database.database", "(default)")
+	v.SetDefault("cloudbase_database.timeout", 10*time.Second)
 
 	v.SetDefault("jwt.expire_hours", 168)
 

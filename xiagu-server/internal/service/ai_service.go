@@ -2,13 +2,16 @@ package service
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 	"unicode/utf8"
 
 	"xiagu-server/internal/config"
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 	"xiagu-server/internal/repository"
+	"xiagu-server/pkg/errcode"
 	"xiagu-server/pkg/external/yuanqi"
 	"xiagu-server/pkg/logger"
 )
@@ -49,9 +52,15 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 	if req.Mode == "" {
 		req.Mode = "normal"
 	}
+	if err := s.repos.AIUsage.Consume(ctx, userID, time.Now(), 5, 50); err != nil {
+		if errors.Is(err, repository.ErrAIRateLimited) {
+			return nil, errcode.RateLimited("AI 对话次数已达上限，请稍后再试")
+		}
+		return nil, err
+	}
 
 	// 1. 获取/创建会话
-	session, err := s.getOrCreateSession(ctx, userID, req.HeroID, req.CityCode)
+	session, err := s.getOrCreateSession(ctx, userID, req.HeroID, req.CityCode, req.Mode)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +97,12 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 	msgs = append(msgs, yuanqi.NewTextMessage("user", userMessage))
 
 	// 3. 调用腾讯元器
-	reply, err := s.yuanqi.Chat(ctx, userID, msgs)
+	upstreamContext, cancelUpstream := context.WithTimeout(
+		ctx,
+		s.cfg.Yuanqi.Timeout,
+	)
+	defer cancelUpstream()
+	reply, err := s.yuanqi.Chat(upstreamContext, userID, msgs)
 	if err != nil {
 		logger.Log.Warnf("[AI] 元器调用失败，使用降级回复: %v", err)
 		reply = s.fallbackReply()
@@ -105,7 +119,9 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 	if reply != s.fallbackReply() {
 		newMsgs = append(newMsgs, model.ChatMessage{Role: "assistant", Content: reply, Mode: req.Mode, Timestamp: time.Now()})
 	}
-	s.repos.Session.AppendMessages(ctx, session.ID, newMsgs)
+	if err := s.repos.Session.AppendMessages(ctx, session.ID, newMsgs); err != nil {
+		logger.Log.Warnf("[AI] 保存会话历史失败: %v", err)
+	}
 
 	// 6. 构建响应
 	resp := &AIChatResp{
@@ -119,8 +135,14 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 
 // === 辅助函数 ===
 
-func (s *AIService) getOrCreateSession(ctx context.Context, userID, heroID, cityCode string) (*model.AISession, error) {
-	session, err := s.repos.Session.GetByUser(ctx, userID)
+func (s *AIService) getOrCreateSession(
+	ctx context.Context,
+	userID string,
+	heroID string,
+	cityCode string,
+	mode string,
+) (*model.AISession, error) {
+	session, err := s.repos.Session.GetByUser(ctx, userID, mode)
 	if err == nil && session != nil {
 		return session, nil
 	}
@@ -130,9 +152,14 @@ func (s *AIService) getOrCreateSession(ctx context.Context, userID, heroID, city
 		HeroID:      heroID,
 		CityCode:    cityCode,
 		Messages:    []model.ChatMessage{},
-		CurrentMode: "normal",
+		CurrentMode: mode,
 	}
 	if err := s.repos.Session.Create(ctx, newSession); err != nil {
+		// Concurrent page requests can create the same user+mode session. The
+		// unique index elects one writer; the loser loads the winning document.
+		if errors.Is(err, database.ErrDuplicateWrite) {
+			return s.repos.Session.GetByUser(ctx, userID, mode)
+		}
 		return nil, err
 	}
 	return newSession, nil

@@ -13,12 +13,12 @@ func validConfigForValidation() *Config {
 			Mode:                "release",
 			AllowedAdminOrigins: []string{"https://admin.example.com"},
 		},
-		MongoDB: MongoConfig{
-			URI:            "mongodb://cloudbase.example:27017",
-			Database:       "cloudbase_database",
-			MaxPoolSize:    10,
-			MinPoolSize:    0,
-			ConnectTimeout: 10 * time.Second,
+		CloudBaseDatabase: CloudBaseDatabaseConfig{
+			EnvironmentID: "cloud-environment",
+			APIKey:        "cloud-api-key",
+			Instance:      "(default)",
+			Database:      "(default)",
+			Timeout:       10 * time.Second,
 		},
 		WeChat: WeChatConfig{
 			AppID:     "wechat-app-id",
@@ -30,7 +30,6 @@ func validConfigForValidation() *Config {
 		},
 		Yuanqi: YuanqiConfig{
 			BaseURL:     "https://yuanqi.example/v1/chat",
-			Token:       "yuanqi-token",
 			AssistantID: "assistant-id",
 			Timeout:     15 * time.Second,
 			MaxRetries:  2,
@@ -45,17 +44,17 @@ func TestValidateRejectsMissingRequiredValues(t *testing.T) {
 		clearValue func(*Config)
 	}{
 		{
-			name:     "MongoDB URI",
-			expected: "mongodb.uri",
+			name:     "CloudBase environment ID",
+			expected: "cloudbase_database.environment_id",
 			clearValue: func(cfg *Config) {
-				cfg.MongoDB.URI = ""
+				cfg.CloudBaseDatabase.EnvironmentID = ""
 			},
 		},
 		{
-			name:     "MongoDB database",
-			expected: "mongodb.database",
+			name:     "CloudBase API key",
+			expected: "cloudbase_database.api_key",
 			clearValue: func(cfg *Config) {
-				cfg.MongoDB.Database = ""
+				cfg.CloudBaseDatabase.APIKey = ""
 			},
 		},
 		{
@@ -77,27 +76,6 @@ func TestValidateRejectsMissingRequiredValues(t *testing.T) {
 			expected: "jwt.secret",
 			clearValue: func(cfg *Config) {
 				cfg.JWT.Secret = ""
-			},
-		},
-		{
-			name:     "Yuanqi base URL",
-			expected: "yuanqi.base_url",
-			clearValue: func(cfg *Config) {
-				cfg.Yuanqi.BaseURL = ""
-			},
-		},
-		{
-			name:     "Yuanqi token",
-			expected: "yuanqi.token",
-			clearValue: func(cfg *Config) {
-				cfg.Yuanqi.Token = ""
-			},
-		},
-		{
-			name:     "Yuanqi assistant ID",
-			expected: "yuanqi.assistant_id",
-			clearValue: func(cfg *Config) {
-				cfg.Yuanqi.AssistantID = ""
 			},
 		},
 		{
@@ -151,24 +129,10 @@ func TestValidateRejectsInvalidValues(t *testing.T) {
 			},
 		},
 		{
-			name:     "zero MongoDB max pool",
-			expected: "mongodb.max_pool_size",
+			name:     "invalid CloudBase database timeout",
+			expected: "cloudbase_database.timeout",
 			changeValue: func(cfg *Config) {
-				cfg.MongoDB.MaxPoolSize = 0
-			},
-		},
-		{
-			name:     "MongoDB min pool exceeds max",
-			expected: "mongodb.min_pool_size",
-			changeValue: func(cfg *Config) {
-				cfg.MongoDB.MinPoolSize = cfg.MongoDB.MaxPoolSize + 1
-			},
-		},
-		{
-			name:     "invalid MongoDB timeout",
-			expected: "mongodb.connect_timeout",
-			changeValue: func(cfg *Config) {
-				cfg.MongoDB.ConnectTimeout = 0
+				cfg.CloudBaseDatabase.Timeout = 0
 			},
 		},
 		{
@@ -220,5 +184,15 @@ func TestValidateAcceptsValidConfig(t *testing.T) {
 
 	if err := cfg.Validate(); err != nil {
 		t.Fatalf("expected valid config, got %v", err)
+	}
+}
+
+func TestValidateAcceptsMissingOptionalYuanqiCredentials(t *testing.T) {
+	cfg := validConfigForValidation()
+	cfg.Yuanqi.BaseURL = ""
+	cfg.Yuanqi.AssistantID = ""
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("expected Yuanqi credentials to be optional, got %v", err)
 	}
 }

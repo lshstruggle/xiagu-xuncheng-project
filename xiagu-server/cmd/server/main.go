@@ -45,44 +45,29 @@ func main() {
 	logger.Init(cfg.Server.Mode)
 	logger.Log.Info("峡谷寻城记 Go后端启动中...")
 
-	// 3. 连接MongoDB
-	mongoConnectContext, cancelMongoConnect := context.WithTimeout(
-		context.Background(),
-		cfg.MongoDB.ConnectTimeout,
+	// 3. 初始化 CloudBase 文档数据库 HTTP 客户端
+	databaseClient, err := database.NewHTTPClient(
+		database.HTTPClientConfig{
+			EnvironmentID: cfg.CloudBaseDatabase.EnvironmentID,
+			Instance:      cfg.CloudBaseDatabase.Instance,
+			Database:      cfg.CloudBaseDatabase.Database,
+			BaseURL:       cfg.CloudBaseDatabase.BaseURL,
+			Timeout:       cfg.CloudBaseDatabase.Timeout,
+		},
+		database.StaticToken(cfg.CloudBaseDatabase.APIKey),
 	)
-
-	mongoClient, err := database.ConnectMongo(
-		mongoConnectContext,
-		cfg.MongoDB,
-	)
-	cancelMongoConnect()
-
 	if err != nil {
-		log.Fatalf("MongoDB连接失败: %v", err)
+		log.Fatalf("初始化 CloudBase 数据库客户端失败: %v", err)
 	}
-	mongoDatabase := mongoClient.Database(cfg.MongoDB.Database)
 	collections := database.NewCollections(
-		mongoDatabase,
-		cfg.MongoDB.CollectionPrefix,
+		databaseClient,
+		cfg.CloudBaseDatabase.CollectionPrefix,
 	)
-	indexContext, cancelIndexes := context.WithTimeout(
-		context.Background(),
-		cfg.MongoDB.ConnectTimeout,
-	)
-	if err := database.EnsureCoreIndexes(
-		indexContext,
-		collections,
-	); err != nil {
-		cancelIndexes()
-		log.Fatalf("创建数据库索引失败: %v", err)
-	}
-	cancelIndexes()
-	logger.Log.Info("MongoDB 连接成功")
+	logger.Log.Info("CloudBase 文档数据库 HTTP 客户端已创建")
 
 	// 4. 初始化外部客户端
 	yuanqiClient := yuanqi.NewClient(
 		cfg.Yuanqi.BaseURL,
-		cfg.Yuanqi.Token,
 		cfg.Yuanqi.AssistantID,
 		cfg.Yuanqi.Timeout,
 		cfg.Yuanqi.MaxRetries,
@@ -101,18 +86,26 @@ func main() {
 	handlers := handler.NewHandlers(svcs, collections)
 
 	// 6. 创建Gin
-	engine := app.BuildEngine(cfg.Server.Mode)
+	engine := app.BuildEngine(
+		cfg.Server.Mode,
+		cfg.Server.AllowedAdminOrigins...,
+	)
 
+	databaseInitialization := app.NewReadinessGate()
 	app.RegisterReadiness(
 		engine,
 		func(requestContext context.Context) error {
+			if err := databaseInitialization.Check(requestContext); err != nil {
+				return err
+			}
+
 			pingContext, cancelPing := context.WithTimeout(
 				requestContext,
 				2*time.Second,
 			)
 			defer cancelPing()
 
-			return mongoClient.Ping(pingContext, nil)
+			return collections.Ping(pingContext)
 		},
 	)
 
@@ -133,6 +126,24 @@ func main() {
 		}
 	}()
 
+	// HTTP 云函数必须先监听 9000 端口。数据库索引初始化放到后台，
+	// 避免外部 API 延迟导致 CloudBase 判定端口绑定失败。
+	go func() {
+		indexContext, cancelIndexes := context.WithTimeout(
+			context.Background(),
+			cfg.CloudBaseDatabase.Timeout,
+		)
+		defer cancelIndexes()
+
+		err := database.EnsureCoreIndexes(indexContext, collections)
+		databaseInitialization.Complete(err)
+		if err != nil {
+			logger.Log.Errorf("创建数据库索引失败: %v", err)
+			return
+		}
+		logger.Log.Info("CloudBase 文档数据库索引就绪")
+	}()
+
 	// 10. 优雅关闭
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -142,6 +153,5 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	srv.Shutdown(ctx)
-	mongoClient.Disconnect(ctx)
 	logger.Log.Info("服务已关闭")
 }

@@ -25,6 +25,9 @@ func (h *CheckinHandler) DoCheckin(c *gin.Context) {
 
 	result, err := h.svcs.Checkin.DoCheckin(c.Request.Context(), userID, &req)
 	if err != nil {
+		if util.AppError(c, err) {
+			return
+		}
 		util.ServerError(c, err.Error())
 		return
 	}

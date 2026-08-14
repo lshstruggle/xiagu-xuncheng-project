@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"os"
 	"strings"
@@ -17,6 +18,13 @@ import (
 )
 
 func main() {
+	resetPassword := flag.Bool(
+		"reset-password",
+		false,
+		"reset the password of an existing administrator",
+	)
+	flag.Parse()
+
 	username := strings.TrimSpace(os.Getenv("ADMIN_USERNAME"))
 	password := os.Getenv("ADMIN_PASSWORD")
 	nickname := strings.TrimSpace(os.Getenv("ADMIN_NICKNAME"))
@@ -44,46 +52,28 @@ func main() {
 	}
 
 	cfg := config.C
-	if strings.TrimSpace(cfg.MongoDB.URI) == "" {
-		log.Fatal("MONGODB_URI is required")
-	}
-	if strings.TrimSpace(cfg.MongoDB.Database) == "" {
-		log.Fatal("MONGODB_DATABASE is required")
-	}
-
-	connectContext, cancelConnect := context.WithTimeout(
-		context.Background(),
-		cfg.MongoDB.ConnectTimeout,
+	client, err := database.NewHTTPClient(
+		database.HTTPClientConfig{
+			EnvironmentID: cfg.CloudBaseDatabase.EnvironmentID,
+			Instance:      cfg.CloudBaseDatabase.Instance,
+			Database:      cfg.CloudBaseDatabase.Database,
+			BaseURL:       cfg.CloudBaseDatabase.BaseURL,
+			Timeout:       cfg.CloudBaseDatabase.Timeout,
+		},
+		database.StaticToken(cfg.CloudBaseDatabase.APIKey),
 	)
-	client, err := database.ConnectMongo(
-		connectContext,
-		cfg.MongoDB,
-	)
-	cancelConnect()
 	if err != nil {
-		log.Fatalf("connect MongoDB: %v", err)
+		log.Fatalf("initialize CloudBase database client: %v", err)
 	}
-
-	defer func() {
-		disconnectContext, cancelDisconnect := context.WithTimeout(
-			context.Background(),
-			5*time.Second,
-		)
-		defer cancelDisconnect()
-
-		if err := client.Disconnect(disconnectContext); err != nil {
-			log.Printf("disconnect MongoDB: %v", err)
-		}
-	}()
 
 	collections := database.NewCollections(
-		client.Database(cfg.MongoDB.Database),
-		cfg.MongoDB.CollectionPrefix,
+		client,
+		cfg.CloudBaseDatabase.CollectionPrefix,
 	)
 
 	indexContext, cancelIndexes := context.WithTimeout(
 		context.Background(),
-		cfg.MongoDB.ConnectTimeout,
+		cfg.CloudBaseDatabase.Timeout,
 	)
 	err = database.EnsureCoreIndexes(
 		indexContext,
@@ -114,9 +104,28 @@ func main() {
 
 	writeContext, cancelWrite := context.WithTimeout(
 		context.Background(),
-		cfg.MongoDB.ConnectTimeout,
+		cfg.CloudBaseDatabase.Timeout,
 	)
 	defer cancelWrite()
+
+	if *resetPassword {
+		result, err := collections.Collection("admins").UpdateOne(
+			writeContext,
+			bson.M{"username": username},
+			bson.M{"$set": bson.M{
+				"password_hash": string(passwordHash),
+				"status":        "active",
+			}},
+		)
+		if err != nil {
+			log.Fatalf("reset administrator password: %v", err)
+		}
+		if result.MatchedCount == 0 {
+			log.Fatalf("administrator %q does not exist", username)
+		}
+		log.Printf("administrator %q password reset", username)
+		return
+	}
 
 	result, err := collections.Collection("admins").UpdateOne(
 		writeContext,
@@ -142,7 +151,7 @@ func main() {
 		"administrator %q created in collection %q",
 		username,
 		database.CollectionName(
-			cfg.MongoDB.CollectionPrefix,
+			cfg.CloudBaseDatabase.CollectionPrefix,
 			"admins",
 		),
 	)

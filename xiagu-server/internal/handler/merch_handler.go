@@ -37,12 +37,15 @@ func (h *MerchHandler) SubmitOrder(c *gin.Context) {
 	}
 
 	if err := h.svc.SubmitOrder(c.Request.Context(), userID, order); err != nil {
-		util.ServerError(c, err.Error())
+		if util.AppError(c, err) {
+			return
+		}
+		util.ServerError(c, "提交周边订单失败")
 		return
 	}
 
 	util.OK(c, gin.H{
 		"success":  true,
-		"order_id": "mock_order_" + req.HeroID,
+		"order_id": order.ID.Hex(),
 	})
 }

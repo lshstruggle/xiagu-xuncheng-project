@@ -18,11 +18,16 @@ type User struct {
 	HeroBonds      map[string]*HeroBond     `bson:"hero_bonds" json:"hero_bonds"`
 	ExploredCities map[string]*CityProgress `bson:"explored_cities" json:"explored_cities"`
 
-	Badges         []string     `bson:"badges" json:"badges"`
-	SpiritBadges   []string     `bson:"spirit_badges" json:"spirit_badges"`
-	BondBookmarks  []string     `bson:"bond_bookmarks" json:"bond_bookmarks"`
-	KnowledgeCards []string     `bson:"knowledge_cards" json:"knowledge_cards"`
-	Coupons        []UserCoupon `bson:"coupons" json:"coupons"`
+	Badges          []string     `bson:"badges" json:"badges"`
+	SpiritBadges    []string     `bson:"spirit_badges" json:"spirit_badges"`
+	BondBookmarks   []string     `bson:"bond_bookmarks" json:"bond_bookmarks"`
+	KnowledgeCards  []string     `bson:"knowledge_cards" json:"knowledge_cards"`
+	StoryFragments  []string     `bson:"story_fragments" json:"story_fragments"`
+	PoetryLines     []string     `bson:"poetry_lines" json:"poetry_lines"`
+	BossPosters     []string     `bson:"boss_posters" json:"boss_posters"`
+	CompletedRoutes []string     `bson:"completed_routes" json:"completed_routes"`
+	ShareCount      int          `bson:"share_count" json:"share_count"`
+	Coupons         []UserCoupon `bson:"coupons" json:"coupons"`
 
 	TotalSteps    int64   `bson:"total_steps" json:"total_steps"`
 	TotalDistance float64 `bson:"total_distance" json:"total_distance"`

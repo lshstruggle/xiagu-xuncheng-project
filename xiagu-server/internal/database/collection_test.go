@@ -2,8 +2,6 @@ package database
 
 import (
 	"testing"
-
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func TestCollectionName(t *testing.T) {
@@ -49,15 +47,7 @@ func TestCollectionName(t *testing.T) {
 }
 
 func TestCollectionsUsesConfiguredPrefix(t *testing.T) {
-	client, err := mongo.NewClient()
-	if err != nil {
-		t.Fatalf("create MongoDB client: %v", err)
-	}
-
-	collections := NewCollections(
-		client.Database("cloudbase_database"),
-		"test_",
-	)
+	collections := NewCollections(&HTTPClient{}, "test_")
 
 	got := collections.Collection("users").Name()
 	if got != "test_users" {

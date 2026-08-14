@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"xiagu-server/internal/model"
 	"xiagu-server/internal/repository"
+	"xiagu-server/pkg/errcode"
 )
 
 // 内存商品配置（后续可迁移到数据库）
@@ -33,8 +35,17 @@ func NewShopService(repos *repository.Repos) *ShopService {
 	return &ShopService{repos: repos}
 }
 
-func (s *ShopService) GetItems(ctx context.Context) []model.ShopItem {
-	return shopItems
+func (s *ShopService) GetItems(ctx context.Context, userID string) ([]model.ShopItem, error) {
+	owned, err := s.repos.User.OwnedShopItems(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]model.ShopItem, len(shopItems))
+	copy(items, shopItems)
+	for index := range items {
+		_, items[index].Owned = owned[items[index].ID]
+	}
+	return items, nil
 }
 
 func (s *ShopService) ExchangeItem(ctx context.Context, userID, itemID string) (heroFrag, skinFrag int, err error) {
@@ -47,38 +58,26 @@ func (s *ShopService) ExchangeItem(ctx context.Context, userID, itemID string) (
 		}
 	}
 	if item == nil {
-		return 0, 0, errors.New("商品不存在")
+		return 0, 0, errcode.NotFound("商品不存在")
 	}
 
-	// 获取用户
-	user, err := s.repos.User.GetByID(ctx, userID)
-	if err != nil {
-		return 0, 0, err
+	heroFrag, skinFrag, err = s.repos.User.ExchangeShopItem(
+		ctx,
+		userID,
+		repository.ShopExchange{
+			ItemID:   item.ID,
+			ItemType: item.Type,
+			HeroID:   item.HeroID,
+			Cost:     item.Cost,
+		},
+	)
+	if errors.Is(err, repository.ErrItemAlreadyOwned) {
+		return 0, 0, errcode.Conflict("已拥有该商品")
 	}
-
-	// 检查是否已拥有（简单逻辑：已选中的英雄视为已拥有）
-	if item.Type == "hero" && user.CurrentHeroID == item.HeroID {
-		return 0, 0, errors.New("已拥有该英雄")
+	if errors.Is(err, repository.ErrInsufficientAssets) {
+		return 0, 0, errcode.Conflict("碎片不足")
 	}
-
-	// 检查碎片是否足够
-	if item.Type == "hero" {
-		if user.HeroFragments < item.Cost {
-			return 0, 0, errors.New("英雄碎片不足")
-		}
-		if err := s.repos.User.UpdateFragments(ctx, userID, -item.Cost, 0); err != nil {
-			return 0, 0, err
-		}
-		return user.HeroFragments - item.Cost, user.SkinFragments, nil
-	}
-
-	if user.SkinFragments < item.Cost {
-		return 0, 0, errors.New("皮肤碎片不足")
-	}
-	if err := s.repos.User.UpdateFragments(ctx, userID, 0, -item.Cost); err != nil {
-		return 0, 0, err
-	}
-	return user.HeroFragments, user.SkinFragments - item.Cost, nil
+	return heroFrag, skinFrag, err
 }
 
 type MerchService struct {
@@ -90,12 +89,47 @@ func NewMerchService(repos *repository.Repos) *MerchService {
 }
 
 func (s *MerchService) SubmitOrder(ctx context.Context, userID string, order *model.MerchOrder) error {
+	order.Name = strings.TrimSpace(order.Name)
+	order.Phone = strings.TrimSpace(order.Phone)
+	order.Address = strings.TrimSpace(order.Address)
+	if order.HeroID == "" || len([]rune(order.Name)) < 2 ||
+		len([]rune(order.Address)) < 6 ||
+		!chinaMobilePattern.MatchString(order.Phone) {
+		return errcode.BadRequest("收货信息格式不正确")
+	}
+
+	user, err := s.repos.User.GetByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	bond := user.HeroBonds[order.HeroID]
+	if bond == nil || BondLevel(bond.BondValue) < 10 {
+		return errcode.Conflict("该英雄羁绊尚未达到 Lv.10")
+	}
+
 	order.UserID = userID
 	order.Status = "pending"
-	order.CreatedAt = time.Now().Format("2006-01-02 15:04:05")
-
-	// TODO: 接入数据库持久化，目前仅打印日志
-	fmt.Printf("[MerchOrder] user=%s hero=%s name=%s phone=%s address=%s\n",
-		order.UserID, order.HeroID, order.Name, order.Phone, order.Address)
+	order.CreatedAt = time.Now()
+	if err := s.repos.MerchOrder.Create(ctx, order); err != nil {
+		if errors.Is(err, repository.ErrMerchAlreadyClaimed) {
+			return errcode.Conflict("该英雄周边已领取")
+		}
+		return err
+	}
 	return nil
+}
+
+var chinaMobilePattern = regexp.MustCompile(`^1[3-9][0-9]{9}$`)
+
+// BondLevel is the single server-authoritative conversion used by both the
+// profile response and merchandise eligibility.
+func BondLevel(bondValue int) int {
+	if bondValue < 0 {
+		bondValue = 0
+	}
+	level := bondValue/200 + 1
+	if level > 10 {
+		return 10
+	}
+	return level
 }

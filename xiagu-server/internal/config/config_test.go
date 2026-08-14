@@ -16,9 +16,9 @@ server:
   port: 8080
   mode: debug
 
-mongodb:
-  uri: mongodb://localhost:27017
-  database: local_database
+cloudbase_database:
+  environment_id: local-environment
+  api_key: local-api-key
 `)
 
 	if err := os.WriteFile(configPath, configData, 0o600); err != nil {
@@ -26,8 +26,8 @@ mongodb:
 	}
 
 	t.Setenv("SERVER_MODE", "release")
-	t.Setenv("MONGODB_URI", "mongodb://cloudbase.example:27017")
-	t.Setenv("MONGODB_DATABASE", "cloudbase_database")
+	t.Setenv("CLOUDBASE_ENV_ID", "cloud-environment")
+	t.Setenv("CLOUDBASE_API_KEY", "cloud-api-key")
 
 	if err := Load(configPath); err != nil {
 		t.Fatalf("load config: %v", err)
@@ -37,27 +37,22 @@ mongodb:
 		t.Fatalf("expected server mode %q, got %q", "release", C.Server.Mode)
 	}
 
-	if C.MongoDB.URI != "mongodb://cloudbase.example:27017" {
+	if C.CloudBaseDatabase.EnvironmentID != "cloud-environment" {
 		t.Fatalf(
-			"expected MongoDB URI %q, got %q",
-			"mongodb://cloudbase.example:27017",
-			C.MongoDB.URI,
+			"expected CloudBase environment ID %q, got %q",
+			"cloud-environment",
+			C.CloudBaseDatabase.EnvironmentID,
 		)
 	}
-
-	if C.MongoDB.Database != "cloudbase_database" {
-		t.Fatalf(
-			"expected MongoDB database %q, got %q",
-			"cloudbase_database",
-			C.MongoDB.Database,
-		)
+	if C.CloudBaseDatabase.APIKey != "cloud-api-key" {
+		t.Fatal("expected CloudBase API key from environment")
 	}
 }
 
 func TestLoadFromCloudEnvironmentWithoutConfigFile(t *testing.T) {
 	t.Setenv("SERVER_MODE", "release")
-	t.Setenv("MONGODB_URI", "mongodb://cloudbase.example:27017")
-	t.Setenv("MONGODB_DATABASE", "cloudbase_database")
+	t.Setenv("CLOUDBASE_ENV_ID", "cloud-environment")
+	t.Setenv("CLOUDBASE_API_KEY", "cloud-api-key")
 
 	if err := Load(""); err != nil {
 		t.Fatalf("load environment-only config: %v", err)
@@ -67,32 +62,19 @@ func TestLoadFromCloudEnvironmentWithoutConfigFile(t *testing.T) {
 		t.Fatalf("expected server mode %q, got %q", "release", C.Server.Mode)
 	}
 
-	if C.MongoDB.URI != "mongodb://cloudbase.example:27017" {
-		t.Fatalf(
-			"expected MongoDB URI %q, got %q",
-			"mongodb://cloudbase.example:27017",
-			C.MongoDB.URI,
-		)
-	}
-
-	if C.MongoDB.Database != "cloudbase_database" {
-		t.Fatalf(
-			"expected MongoDB database %q, got %q",
-			"cloudbase_database",
-			C.MongoDB.Database,
-		)
+	if C.CloudBaseDatabase.EnvironmentID != "cloud-environment" {
+		t.Fatalf("unexpected environment ID %q", C.CloudBaseDatabase.EnvironmentID)
 	}
 }
 
 func TestLoadCloudEnvironmentAndServerlessDefaults(t *testing.T) {
 	t.Setenv("SERVER_MODE", "release")
-	t.Setenv("MONGODB_URI", "mongodb://cloudbase.example:27017")
-	t.Setenv("MONGODB_DATABASE", "cloudbase_database")
+	t.Setenv("CLOUDBASE_ENV_ID", "cloud-environment")
+	t.Setenv("CLOUDBASE_API_KEY", "cloud-api-key")
 	t.Setenv("WECHAT_APP_ID", "wechat-app-id")
 	t.Setenv("WECHAT_APP_SECRET", "wechat-app-secret")
 	t.Setenv("JWT_SECRET", "test-jwt-secret")
 	t.Setenv("YUANQI_BASE_URL", "https://yuanqi.example/v1/chat")
-	t.Setenv("YUANQI_TOKEN", "yuanqi-token")
 	t.Setenv("YUANQI_ASSISTANT_ID", "assistant-id")
 
 	if err := Load(""); err != nil {
@@ -115,10 +97,6 @@ func TestLoadCloudEnvironmentAndServerlessDefaults(t *testing.T) {
 		t.Fatalf("expected JWT secret from environment")
 	}
 
-	if C.Yuanqi.Token != "yuanqi-token" {
-		t.Fatalf("expected Yuanqi token from environment")
-	}
-
 	if C.Yuanqi.AssistantID != "assistant-id" {
 		t.Fatalf(
 			"expected Yuanqi assistant ID %q, got %q",
@@ -135,28 +113,15 @@ func TestLoadCloudEnvironmentAndServerlessDefaults(t *testing.T) {
 		t.Fatalf("expected default server port %d, got %d", 9000, C.Server.Port)
 	}
 
-	if C.MongoDB.MaxPoolSize != 10 {
+	if C.CloudBaseDatabase.Timeout != 10*time.Second {
 		t.Fatalf(
-			"expected default MongoDB max pool size %d, got %d",
-			10,
-			C.MongoDB.MaxPoolSize,
-		)
-	}
-
-	if C.MongoDB.MinPoolSize != 0 {
-		t.Fatalf(
-			"expected default MongoDB min pool size %d, got %d",
-			0,
-			C.MongoDB.MinPoolSize,
-		)
-	}
-
-	if C.MongoDB.ConnectTimeout != 10*time.Second {
-		t.Fatalf(
-			"expected MongoDB connect timeout %s, got %s",
+			"expected CloudBase database timeout %s, got %s",
 			10*time.Second,
-			C.MongoDB.ConnectTimeout,
+			C.CloudBaseDatabase.Timeout,
 		)
+	}
+	if C.CloudBaseDatabase.Instance != "(default)" || C.CloudBaseDatabase.Database != "(default)" {
+		t.Fatal("expected default CloudBase instance and database")
 	}
 
 	if C.JWT.ExpireHours != 168 {
@@ -185,7 +150,7 @@ func TestLoadCloudEnvironmentAndServerlessDefaults(t *testing.T) {
 }
 
 func TestLoadCloudSpecificFields(t *testing.T) {
-	t.Setenv("MONGODB_COLLECTION_PREFIX", "test_")
+	t.Setenv("CLOUDBASE_COLLECTION_PREFIX", "test_")
 	t.Setenv(
 		"ALLOWED_ADMIN_ORIGINS",
 		"https://admin.example.com,https://staging-admin.example.com",
@@ -195,11 +160,11 @@ func TestLoadCloudSpecificFields(t *testing.T) {
 		t.Fatalf("load CloudBase-specific config: %v", err)
 	}
 
-	if C.MongoDB.CollectionPrefix != "test_" {
+	if C.CloudBaseDatabase.CollectionPrefix != "test_" {
 		t.Fatalf(
 			"expected collection prefix %q, got %q",
 			"test_",
-			C.MongoDB.CollectionPrefix,
+			C.CloudBaseDatabase.CollectionPrefix,
 		)
 	}
 

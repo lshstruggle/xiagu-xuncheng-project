@@ -57,7 +57,7 @@ func TestReadinessEndpointReturnsUnavailable(t *testing.T) {
 
 	RegisterReadiness(engine, func(ctx context.Context) error {
 		return errors.New(
-			"mongodb://user:secret-password@database.example",
+			"sensitive-cloudbase-api-key",
 		)
 	})
 

@@ -38,6 +38,8 @@ output/
 xiagu-server/main
 xiagu-server/server
 xiagu-server/pregenerate.log
+xiagu-server/deploy/cloudbase/smoke/main
+xiagu-tts-local-assets.tar.gz
 
 # Large third-party runtimes and AI model weights
 GPT-SoVITS/
