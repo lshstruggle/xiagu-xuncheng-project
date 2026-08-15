@@ -1,0 +1,212 @@
+.user-profile-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  box-sizing: border-box;
+  background: rgba(4, 8, 20, 0.84);
+  backdrop-filter: blur(12px);
+}
+
+.user-profile-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  padding: 42px 40px 30px;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 2px solid rgba(245, 197, 24, 0.45);
+  border-radius: 32px;
+  background: linear-gradient(160deg, #192844 0%, #101a31 62%, #0c1428 100%);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.user-profile-dialog::before {
+  position: absolute;
+  top: 0;
+  right: 44px;
+  left: 44px;
+  height: 2px;
+  content: '';
+  background: linear-gradient(90deg, transparent, #f5c518, transparent);
+}
+
+.user-profile-glow {
+  position: absolute;
+  top: -180px;
+  left: 50%;
+  width: 440px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 197, 24, 0.15), transparent 68%);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.user-profile-emblem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 10px;
+  border: 2px solid rgba(245, 197, 24, 0.55);
+  border-radius: 50%;
+  background: rgba(245, 197, 24, 0.1);
+  color: #f5c518;
+  font-size: 28px;
+  box-shadow: 0 0 24px rgba(245, 197, 24, 0.18);
+}
+
+.user-profile-eyebrow,
+.user-profile-title,
+.user-profile-desc {
+  position: relative;
+  display: block;
+  text-align: center;
+}
+
+.user-profile-eyebrow {
+  color: rgba(245, 197, 24, 0.68);
+  font-size: 18px;
+  letter-spacing: 5px;
+}
+
+.user-profile-title {
+  margin-top: 8px;
+  color: #fff;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.user-profile-desc {
+  margin-top: 12px;
+  color: rgba(210, 224, 248, 0.62);
+  font-size: 24px;
+  line-height: 1.5;
+}
+
+.user-profile-avatar-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 28px 0 24px;
+}
+
+.user-profile-avatar-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 168px;
+  height: 168px;
+  border: 2px solid rgba(245, 197, 24, 0.36);
+  border-radius: 50%;
+  background: rgba(245, 197, 24, 0.04);
+  box-shadow: 0 0 0 10px rgba(245, 197, 24, 0.035), 0 0 34px rgba(245, 197, 24, 0.12);
+}
+
+.user-profile-avatar-button {
+  width: 146px;
+  height: 146px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 3px solid #f5c518;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #263959, #101a2e);
+  color: rgba(255, 255, 255, 0.7);
+  line-height: normal;
+}
+
+.user-profile-avatar-button::after,
+.user-profile-save::after,
+.user-profile-later::after {
+  border: 0;
+}
+
+.user-profile-avatar,
+.user-profile-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.user-profile-avatar-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-profile-avatar-plus {
+  color: #f5c518;
+  font-size: 58px;
+  font-weight: 200;
+}
+
+.user-profile-avatar-hint {
+  margin-top: 18px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 22px;
+}
+
+.user-profile-field {
+  padding: 18px 22px 20px;
+  border: 2px solid rgba(123, 163, 218, 0.16);
+  border-radius: 18px;
+  background: rgba(7, 14, 31, 0.42);
+}
+
+.user-profile-field-label {
+  display: block;
+  margin-bottom: 10px;
+  color: rgba(245, 197, 24, 0.86);
+  font-size: 21px;
+  letter-spacing: 2px;
+}
+
+.user-profile-nickname {
+  height: 52px;
+  color: #fff;
+  font-size: 31px;
+  font-weight: 500;
+}
+
+.user-profile-placeholder {
+  color: rgba(201, 216, 241, 0.34);
+}
+
+.user-profile-privacy {
+  display: block;
+  margin-top: 16px;
+  color: rgba(192, 208, 232, 0.42);
+  font-size: 20px;
+  text-align: center;
+}
+
+.user-profile-save,
+.user-profile-later {
+  border-radius: 18px;
+  font-size: 28px;
+}
+
+.user-profile-save {
+  margin-top: 26px;
+  background: linear-gradient(100deg, #d7a90e, #f5d34d 52%, #d6a40b);
+  color: #111a2b;
+  font-weight: 700;
+  letter-spacing: 2px;
+  box-shadow: 0 10px 28px rgba(222, 174, 17, 0.2);
+}
+
+.user-profile-later {
+  margin-top: 8px;
+  background: transparent;
+  color: rgba(205, 219, 242, 0.46);
+  font-size: 24px;
+}

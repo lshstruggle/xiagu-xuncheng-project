@@ -43,6 +43,34 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 	util.OK(c, user)
 }
 
+func (h *UserHandler) UpdateProfile(c *gin.Context) {
+	userID := c.GetString("user_id")
+	var req struct {
+		Nickname string `json:"nickname" binding:"required"`
+		Avatar   string `json:"avatar" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		util.BadRequest(c, "昵称和头像不能为空")
+		return
+	}
+
+	user, err := h.svcs.User.UpdateProfile(
+		c.Request.Context(),
+		userID,
+		req.Nickname,
+		req.Avatar,
+	)
+	if errors.Is(err, service.ErrInvalidUserProfile) {
+		util.BadRequest(c, "昵称或头像格式不正确")
+		return
+	}
+	if err != nil {
+		util.ServerError(c, "保存用户资料失败")
+		return
+	}
+	util.OK(c, user)
+}
+
 func (h *UserHandler) GetAssets(c *gin.Context) {
 	userID := c.GetString("user_id")
 	heroFrag, skinFrag, err := h.svcs.User.GetAssets(c.Request.Context(), userID)

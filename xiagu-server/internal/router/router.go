@@ -102,6 +102,7 @@ func Setup(r *gin.Engine, h *handler.Handlers, users middleware.UserStatusReader
 	{
 		// 用户
 		auth.GET("/user/profile", h.User.GetProfile)
+		auth.PUT("/user/profile", h.User.UpdateProfile)
 		auth.PUT("/user/hero", h.User.SelectHero)
 
 		// POI

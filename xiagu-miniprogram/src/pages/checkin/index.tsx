@@ -11,6 +11,7 @@ import StoryDialog from '../../components/story-dialog'
 import StoryRoute from '../../components/story-route'
 import WebPet from '../../components/web-pet'
 import FutureBg from '../../components/future-bg'
+import UserProfileModal from '../../components/user-profile-modal'
 import TowerQuizModal from '../../components/tower-quiz-modal'
 import TowerMatch3Modal from '../../components/tower-match3-modal'
 import BossMatchModal from '../../components/boss-match-modal'
@@ -3817,6 +3818,7 @@ export default function Checkin() {
           </View>
         </View>
       )}
+      <UserProfileModal user={userInfo} onSaved={setUserInfo} />
     </View>
   )
 }

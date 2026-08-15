@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"xiagu-server/internal/config"
 	"xiagu-server/internal/model"
@@ -13,6 +15,7 @@ import (
 )
 
 var ErrUserBanned = errors.New("user banned")
+var ErrInvalidUserProfile = errors.New("invalid user profile")
 
 type UserService struct {
 	repos  *repository.Repos
@@ -60,6 +63,35 @@ func (s *UserService) Login(ctx context.Context, code string) (*LoginResp, error
 
 func (s *UserService) GetProfile(ctx context.Context, userID string) (*model.User, error) {
 	return s.repos.User.GetByID(ctx, userID)
+}
+
+func (s *UserService) UpdateProfile(
+	ctx context.Context,
+	userID string,
+	nickname string,
+	avatar string,
+) (*model.User, error) {
+	nickname = strings.TrimSpace(nickname)
+	avatar = strings.TrimSpace(avatar)
+
+	if err := validateUserProfile(nickname, avatar); err != nil {
+		return nil, ErrInvalidUserProfile
+	}
+
+	if err := s.repos.User.UpdateProfile(ctx, userID, nickname, avatar); err != nil {
+		return nil, err
+	}
+	return s.repos.User.GetByID(ctx, userID)
+}
+
+func validateUserProfile(nickname string, avatar string) error {
+	if count := utf8.RuneCountInString(nickname); count < 1 || count > 20 {
+		return ErrInvalidUserProfile
+	}
+	if len(avatar) > 2048 || !strings.HasPrefix(avatar, "cloud://") {
+		return ErrInvalidUserProfile
+	}
+	return nil
 }
 
 func (s *UserService) GetAssets(ctx context.Context, userID string) (heroFrag, skinFrag int, err error) {

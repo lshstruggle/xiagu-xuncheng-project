@@ -114,6 +114,9 @@ export const api = {
   getProfile: () =>
     request<any>('/user/profile', 'GET'),
 
+  updateProfile: (data: { nickname: string; avatar: string }) =>
+    request<any>('/user/profile', 'PUT', data),
+
   selectHero: (heroId: string) =>
     request<any>('/user/hero', 'PUT', { hero_id: heroId }),
 

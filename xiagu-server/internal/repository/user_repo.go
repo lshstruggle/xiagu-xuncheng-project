@@ -170,6 +170,33 @@ func (r *UserRepo) GetByID(ctx context.Context, id string) (*model.User, error) 
 	return &user, err
 }
 
+func (r *UserRepo) UpdateProfile(
+	ctx context.Context,
+	userID string,
+	nickname string,
+	avatar string,
+) error {
+	oid, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return fmt.Errorf("parse user ID: %w", err)
+	}
+
+	result, err := r.coll.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{
+		"$set": bson.M{
+			"nickname":   nickname,
+			"avatar":     avatar,
+			"updated_at": time.Now(),
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("update user profile: %w", err)
+	}
+	if result.MatchedCount != 1 {
+		return database.ErrDocumentNotFound
+	}
+	return nil
+}
+
 func (r *UserRepo) Create(ctx context.Context, user *model.User) error {
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
