@@ -166,11 +166,12 @@
 
 /* 消息滚动区 */
 .web-pet-chat-scroll {
-  flex: 1;
-  overflow-y: auto;
-  max-height: 400rpx;
+  height: 400rpx;
+  flex: 0 1 auto;
+  min-height: 0;
   margin-bottom: 16rpx;
   padding-right: 8rpx;
+  box-sizing: border-box;
 }
 
 /* 消息行 */

@@ -11,6 +11,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"xiagu-server/internal/model"
+	"xiagu-server/internal/rewardconfig"
 )
 
 const MONGO_URI = "mongodb://localhost:27017"
@@ -336,6 +339,22 @@ func seedPOIs(ctx context.Context, db *mongo.Database) {
 			"created_at": time.Now(),
 			"updated_at": time.Now(),
 		},
+	}
+
+	for _, document := range pois {
+		poi := document.(bson.M)
+		fragments, ok := rewardconfig.DefaultFragments(
+			model.POIType(poi["type"].(string)),
+		)
+		if !ok {
+			log.Fatalf("POI %q has unsupported type %q", poi["name"], poi["type"])
+		}
+		rewards, ok := poi["rewards"].(bson.M)
+		if !ok {
+			rewards = bson.M{}
+			poi["rewards"] = rewards
+		}
+		rewards["fragments"] = fragments
 	}
 
 	result, err := coll.InsertMany(ctx, pois)

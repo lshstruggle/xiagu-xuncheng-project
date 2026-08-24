@@ -1,9 +1,11 @@
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
+	"errors"
 	"xiagu-server/internal/service"
 	"xiagu-server/pkg/util"
+
+	"github.com/gin-gonic/gin"
 )
 
 type UserHandler struct {
@@ -19,26 +21,13 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// 调试模式：特定code直接返回测试token
-	if req.Code == "debug_login_code" {
-		util.OK(c, gin.H{
-			"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjI3Yjc0YjY1ZTU4ZDYzNDcwMDAwMDAxIiwib3BlbmlkIjoiZGVidWdfb3BlbmlkXzAwMSIsImV4cCI6MTg4ODg4ODg4OH0.test",
-			"user": gin.H{
-				"id":       "627b74b65e58d63470000001",
-				"nickname": "测试召唤师",
-				"avatar_url": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/131/131.jpg",
-				"selected_hero": "li_bai",
-				"total_checkins": 0,
-				"badges": []string{},
-				"explored_cities": []string{"CD"},
-			},
-		})
+	result, err := h.svcs.User.Login(c.Request.Context(), req.Code)
+	if errors.Is(err, service.ErrUserBanned) {
+		util.Forbidden(c, "用户已被封禁")
 		return
 	}
-
-	result, err := h.svcs.User.Login(c.Request.Context(), req.Code)
 	if err != nil {
-		util.ServerError(c, err.Error())
+		util.ServerError(c, "登录失败")
 		return
 	}
 	util.OK(c, result)
@@ -49,6 +38,34 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 	user, err := h.svcs.User.GetProfile(c.Request.Context(), userID)
 	if err != nil {
 		util.NotFound(c, "用户不存在")
+		return
+	}
+	util.OK(c, user)
+}
+
+func (h *UserHandler) UpdateProfile(c *gin.Context) {
+	userID := c.GetString("user_id")
+	var req struct {
+		Nickname string `json:"nickname" binding:"required"`
+		Avatar   string `json:"avatar" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		util.BadRequest(c, "昵称和头像不能为空")
+		return
+	}
+
+	user, err := h.svcs.User.UpdateProfile(
+		c.Request.Context(),
+		userID,
+		req.Nickname,
+		req.Avatar,
+	)
+	if errors.Is(err, service.ErrInvalidUserProfile) {
+		util.BadRequest(c, "昵称或头像格式不正确")
+		return
+	}
+	if err != nil {
+		util.ServerError(c, "保存用户资料失败")
 		return
 	}
 	util.OK(c, user)

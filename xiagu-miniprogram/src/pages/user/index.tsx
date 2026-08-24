@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import './index.scss'
 import FutureBg from '../../components/future-bg'
+import UserProfileModal from '../../components/user-profile-modal'
 import { getUser, isLoggedIn, doLogin } from '../../services/auth'
 import { api } from '../../services/api'
 import { getTempFileURL } from '../../utils/temp-url-cache'
@@ -20,6 +21,7 @@ export default function User() {
   const [assets, setAssets] = useState({ heroFragments: 0, skinFragments: 0 })
   const [fragIcons, setFragIcons] = useState({ hero: '', skin: '' })
   const [loading, setLoading] = useState(true)
+  const [profileEditorOpen, setProfileEditorOpen] = useState(false)
 
   useEffect(() => {
     loadUserData()
@@ -76,6 +78,8 @@ export default function User() {
     try {
       const profile = await api.getProfile()
       if (profile) {
+        setUserInfo(profile)
+        Taro.setStorageSync('user', profile)
         setUserStats({
           cities: profile.explored_cities?.length || 1,
           checkins: profile.total_checkins || 0,
@@ -95,8 +99,8 @@ export default function User() {
   }
 
   const getAvatarUrl = () => {
-    if (userInfo?.avatar_url) {
-      return userInfo.avatar_url
+    if (userInfo?.avatar) {
+      return userInfo.avatar
     }
     const heroId = userInfo?.selected_hero || 'li_bai'
     const heroAvatarMap: Record<string, string> = {
@@ -145,10 +149,13 @@ export default function User() {
       <ScrollView className='user-scroll' scrollY>
         {/* 1. 头部用户信息区（头像昵称上下居中） */}
       <View className='profile-header'>
-        <View className='avatar-large'>
+        <View className='avatar-large' onClick={() => setProfileEditorOpen(true)}>
           <Image className='avatar-img' src={getAvatarUrl()} mode='aspectFill' />
         </View>
         <Text className='username'>{getNickname()}</Text>
+        <Text className='profile-edit-hint' onClick={() => setProfileEditorOpen(true)}>
+          点击头像修改资料
+        </Text>
         <Text className='user-level'>{getLevelText()}</Text>
 
         {/* 核心资产展示栏 */}
@@ -213,6 +220,12 @@ export default function User() {
       {/* 底部安全间距 */}
       <View className='safe-bottom'></View>
     </ScrollView>
+    <UserProfileModal
+      user={userInfo}
+      forceVisible={profileEditorOpen}
+      onSaved={setUserInfo}
+      onClose={() => setProfileEditorOpen(false)}
+    />
   </View>
   )
 }

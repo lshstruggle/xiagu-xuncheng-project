@@ -16,7 +16,11 @@ func NewShopHandler(svc *service.ShopService) *ShopHandler {
 
 // GetItems 获取商品列表
 func (h *ShopHandler) GetItems(c *gin.Context) {
-	items := h.svc.GetItems(c.Request.Context())
+	items, err := h.svc.GetItems(c.Request.Context(), c.GetString("user_id"))
+	if err != nil {
+		util.ServerError(c, "读取商城商品失败")
+		return
+	}
 	util.OK(c, items)
 }
 
@@ -33,7 +37,10 @@ func (h *ShopHandler) ExchangeItem(c *gin.Context) {
 
 	heroFrag, skinFrag, err := h.svc.ExchangeItem(c.Request.Context(), userID, req.ItemID)
 	if err != nil {
-		util.BadRequest(c, err.Error())
+		if util.AppError(c, err) {
+			return
+		}
+		util.ServerError(c, "兑换商品失败")
 		return
 	}
 

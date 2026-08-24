@@ -1,4 +1,5 @@
 import Taro from '@tarojs/taro'
+import { api, type TTSSegment } from './api'
 
 // 全局音频实例
 const innerAudio = Taro.createInnerAudioContext()
@@ -49,6 +50,92 @@ export function stopAudio() {
  */
 export function isPlaying(): boolean {
   return !innerAudio.paused
+}
+
+let aiPlaybackGeneration = 0
+let aiTempFilePath = ''
+const aiSegmentCache = new Map<string, ArrayBuffer>()
+
+function cleanupAITempFile() {
+  if (!aiTempFilePath) return
+  Taro.getFileSystemManager().unlink({ filePath: aiTempFilePath, fail: () => {} })
+  aiTempFilePath = ''
+}
+
+function playWavBytes(bytes: ArrayBuffer, generation: number, onStart?: () => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const filePath = `${Taro.env.USER_DATA_PATH}/ai_tts_${Date.now()}_${generation}.wav`
+    cleanupAITempFile()
+    aiTempFilePath = filePath
+    Taro.getFileSystemManager().writeFile({
+      filePath,
+      data: bytes,
+      success: () => {
+        if (generation !== aiPlaybackGeneration) {
+          cleanupAITempFile()
+          resolve()
+          return
+        }
+        innerAudio.stop()
+        innerAudio.offEnded()
+        innerAudio.offError()
+        innerAudio.src = filePath
+        innerAudio.onEnded(() => {
+          cleanupAITempFile()
+          resolve()
+        })
+        innerAudio.onError((error) => {
+          cleanupAITempFile()
+          reject(error)
+        })
+        innerAudio.play()
+        onStart?.()
+      },
+      fail: reject,
+    })
+  })
+}
+
+async function getAISegmentAudio(segment: TTSSegment, heroId: string): Promise<ArrayBuffer> {
+  const cached = aiSegmentCache.get(segment.ticket)
+  if (cached) return cached
+  const audio = await api.getTTSSegment({
+    hero_id: heroId,
+    text: segment.text,
+    ticket: segment.ticket,
+  })
+  aiSegmentCache.set(segment.ticket, audio)
+  return audio
+}
+
+/**
+ * Plays ordered AI segments.  When a sentence starts, the next sentence is
+ * requested immediately so TTS inference overlaps with playback.
+ */
+export async function playAIChatSegments(segments: TTSSegment[], heroId: string): Promise<void> {
+  const generation = ++aiPlaybackGeneration
+  innerAudio.stop()
+  cleanupAITempFile()
+  for (let index = 0; index < segments.length; index++) {
+    if (generation !== aiPlaybackGeneration) return
+    const audio = await getAISegmentAudio(segments[index], heroId)
+    if (generation !== aiPlaybackGeneration) return
+    let nextRequestStarted = false
+    await playWavBytes(audio, generation, () => {
+      if (!nextRequestStarted && index + 1 < segments.length) {
+        nextRequestStarted = true
+        // A failure is handled when that segment becomes the current one.
+        void getAISegmentAudio(segments[index + 1], heroId).catch(() => undefined)
+      }
+    })
+  }
+}
+
+/** Cancels playback and prevents a late HTTP response from starting audio. */
+export function stopAIChatAudio() {
+  aiPlaybackGeneration++
+  innerAudio.stop()
+  cleanupAITempFile()
 }
 
 /**

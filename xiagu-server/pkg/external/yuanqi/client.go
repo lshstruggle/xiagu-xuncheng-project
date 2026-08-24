@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -77,6 +78,9 @@ type Client struct {
 }
 
 func NewClient(baseURL, token, assistantID string, timeout time.Duration, maxRetries int, logger *zap.SugaredLogger) *Client {
+	if logger == nil {
+		logger = zap.NewNop().Sugar()
+	}
 	return &Client{
 		baseURL:     baseURL,
 		token:       token,
@@ -89,6 +93,10 @@ func NewClient(baseURL, token, assistantID string, timeout time.Duration, maxRet
 
 // Chat 发送对话请求，返回AI文本回复
 func (c *Client) Chat(ctx context.Context, userID string, messages []Message) (string, error) {
+	if !c.Configured() {
+		return "", fmt.Errorf("元器客户端未配置")
+	}
+
 	// 将所有消息转换为元器要求的content数组格式
 	apiMessages := make([]Message, 0, len(messages))
 	for _, msg := range messages {
@@ -114,7 +122,13 @@ func (c *Client) Chat(ctx context.Context, userID string, messages []Message) (s
 
 	for attempt := 0; attempt <= c.maxRetries; attempt++ {
 		if attempt > 0 {
-			time.Sleep(time.Duration(attempt) * time.Second)
+			timer := time.NewTimer(time.Duration(attempt) * time.Second)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return "", fmt.Errorf("元器调用已取消: %w", ctx.Err())
+			case <-timer.C:
+			}
 			c.logger.Warnf("[元器] 第%d次重试...", attempt)
 		}
 
@@ -123,9 +137,6 @@ func (c *Client) Chat(ctx context.Context, userID string, messages []Message) (s
 			lastErr = fmt.Errorf("序列化请求失败: %w", err)
 			continue
 		}
-
-		// 调试：打印请求体
-		c.logger.Infof("[元器] 请求体: %s", string(body))
 
 		req, err := http.NewRequestWithContext(ctx, "POST", c.baseURL, bytes.NewReader(body))
 		if err != nil {
@@ -146,8 +157,7 @@ func (c *Client) Chat(ctx context.Context, userID string, messages []Message) (s
 		respBody, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
 
-		// 调试：打印响应体
-		c.logger.Infof("[元器] 响应状态: %d, 响应体: %s", resp.StatusCode, string(respBody))
+		c.logger.Infof("[元器] 响应状态: %d", resp.StatusCode)
 
 		if resp.StatusCode != 200 {
 			lastErr = fmt.Errorf("元器API返回%d: %s", resp.StatusCode, string(respBody))
@@ -178,6 +188,15 @@ func (c *Client) Chat(ctx context.Context, userID string, messages []Message) (s
 	}
 
 	return "", fmt.Errorf("元器调用失败(重试%d次): %w", c.maxRetries, lastErr)
+}
+
+// Configured reports whether all credentials required for an upstream call
+// are available. Yuanqi is optional so the rest of the API can still start
+// and AIService can return its fixed fallback reply.
+func (c *Client) Configured() bool {
+	return strings.TrimSpace(c.baseURL) != "" &&
+		strings.TrimSpace(c.token) != "" &&
+		strings.TrimSpace(c.assistantID) != ""
 }
 
 func truncateStr(s string, maxLen int) string {

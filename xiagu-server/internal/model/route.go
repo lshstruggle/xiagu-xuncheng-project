@@ -4,6 +4,7 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Route struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	RouteCode   string             `bson:"route_code" json:"routeCode"`
 	CityCode    string             `bson:"city_code" json:"cityCode"`
 	Name        string             `bson:"name" json:"name"`
 	Description string             `bson:"description" json:"description"`

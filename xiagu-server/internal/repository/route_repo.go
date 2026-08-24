@@ -2,18 +2,30 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 )
 
+var ErrRouteNotFound = errors.New("route not found")
+
 type RouteRepo struct {
-	coll *mongo.Collection
+	coll *database.Collection
 }
 
-func NewRouteRepo(db *mongo.Database) *RouteRepo {
+func (r *RouteRepo) GetByCode(ctx context.Context, routeCode string) (*model.Route, error) {
+	var route model.Route
+	err := r.coll.FindOne(ctx, bson.M{"route_code": routeCode, "status": "active"}).Decode(&route)
+	if errors.Is(err, database.ErrDocumentNotFound) {
+		return nil, ErrRouteNotFound
+	}
+	return &route, err
+}
+
+func NewRouteRepo(db *database.Collections) *RouteRepo {
 	return &RouteRepo{coll: db.Collection("routes")}
 }
 

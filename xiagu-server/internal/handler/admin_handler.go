@@ -1,24 +1,33 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 	"xiagu-server/pkg/util"
 )
 
 // AdminHandler 管理员接口处理器
 type AdminHandler struct {
-	// 后续注入service
+	collection *database.Collection
+	jwtSecret  string
 }
 
 // NewAdminHandler 创建处理器
-func NewAdminHandler() *AdminHandler {
-	return &AdminHandler{}
+func NewAdminHandler(collections *database.Collections,
+	jwtSecret string) *AdminHandler {
+	return &AdminHandler{
+		collection: collections.Collection("admins"),
+		jwtSecret:  jwtSecret,
+	}
 }
 
 // LoginRequest 登录请求
@@ -30,7 +39,7 @@ type LoginRequest struct {
 
 // LoginResponse 登录响应
 type LoginResponse struct {
-	Token string         `json:"token"`
+	Token string          `json:"token"`
 	User  model.AdminUser `json:"user"`
 }
 
@@ -42,38 +51,82 @@ func (h *AdminHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// TODO: 从数据库查询管理员
-	// 临时使用硬编码管理员账号
-	if req.Username != "admin" {
-		util.ResponseError(c, http.StatusUnauthorized, "用户不存在")
+	var admin model.AdminUser
+	err := h.collection.FindOne(
+		c.Request.Context(),
+		bson.M{
+			"username": req.Username,
+			"status":   "active",
+		},
+	).Decode(&admin)
+
+	if errors.Is(err, database.ErrDocumentNotFound) {
+		util.ResponseError(
+			c,
+			http.StatusUnauthorized,
+			"用户名或密码错误",
+		)
 		return
 	}
-
-	// 验证密码（默认密码 admin123）
-	// 生产环境使用 bcrypt，开发环境临时用明文
-	if req.Password != "admin123" {
-		util.ResponseError(c, http.StatusUnauthorized, "密码错误")
-		return
-	}
-
-	// 生成JWT
-	token, err := util.GenerateAdminToken("admin_id_001", req.Username)
 	if err != nil {
-		util.ResponseError(c, http.StatusInternalServerError, "生成Token失败")
+		util.ResponseError(
+			c,
+			http.StatusServiceUnavailable,
+			"认证服务暂不可用",
+		)
 		return
 	}
 
-	user := model.AdminUser{
-		ID:          primitive.NewObjectID(),
-		Username:    "admin",
-		Nickname:    "超级管理员",
-		Role:        "super_admin",
-		LastLoginAt: time.Now(),
+	err = bcrypt.CompareHashAndPassword(
+		[]byte(admin.PasswordHash),
+		[]byte(req.Password),
+	)
+	if err != nil {
+		util.ResponseError(
+			c,
+			http.StatusUnauthorized,
+			"用户名或密码错误",
+		)
+		return
+	}
+
+	token, err := util.GenerateAdminToken(
+		admin.ID.Hex(),
+		admin.Username,
+		admin.Role,
+		h.jwtSecret,
+	)
+	if err != nil {
+		util.ResponseError(
+			c,
+			http.StatusInternalServerError,
+			"生成Token失败",
+		)
+		return
+	}
+
+	now := time.Now()
+	admin.LastLoginAt = now
+
+	_, err = h.collection.UpdateOne(
+		c.Request.Context(),
+		bson.M{"_id": admin.ID},
+		bson.M{"$set": bson.M{
+			"last_login_at": now,
+		}},
+	)
+	if err != nil {
+		util.ResponseError(
+			c,
+			http.StatusInternalServerError,
+			"更新登录状态失败",
+		)
+		return
 	}
 
 	util.ResponseSuccess(c, LoginResponse{
 		Token: token,
-		User:  user,
+		User:  admin,
 	})
 }
 
@@ -85,21 +138,36 @@ func (h *AdminHandler) Logout(c *gin.Context) {
 
 // GetProfile 获取管理员信息
 func (h *AdminHandler) GetProfile(c *gin.Context) {
-	// 从JWT获取管理员ID
-	adminID, _ := c.Get("admin_id")
-	username, _ := c.Get("username")
+	adminID := c.GetString("admin_id")
 
-	user := model.AdminUser{
-		ID:       primitive.NewObjectID(),
-		Username: username.(string),
-		Nickname: "超级管理员",
-		Role:     "super_admin",
-		Avatar:   "",
+	objectID, err := primitive.ObjectIDFromHex(adminID)
+	if err != nil {
+		util.ResponseError(
+			c,
+			http.StatusUnauthorized,
+			"管理员身份无效",
+		)
+		return
 	}
 
-	_ = adminID
+	var admin model.AdminUser
+	err = h.collection.FindOne(
+		c.Request.Context(),
+		bson.M{
+			"_id":    objectID,
+			"status": "active",
+		},
+	).Decode(&admin)
+	if err != nil {
+		util.ResponseError(
+			c,
+			http.StatusUnauthorized,
+			"管理员不存在或已停用",
+		)
+		return
+	}
 
-	util.ResponseSuccess(c, user)
+	util.ResponseSuccess(c, admin)
 }
 
 // GetDashboardStats 获取数据看板统计

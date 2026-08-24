@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Starting xiagu-server on 0.0.0.0:9000"
+exec /var/user/main

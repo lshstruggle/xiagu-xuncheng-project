@@ -2,29 +2,32 @@ package service
 
 import (
 	"context"
-	"encoding/base64"
+	"errors"
 	"strings"
 	"time"
 	"unicode/utf8"
 
 	"xiagu-server/internal/config"
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 	"xiagu-server/internal/repository"
-	"xiagu-server/pkg/external/sovits"
+	"xiagu-server/pkg/errcode"
 	"xiagu-server/pkg/external/yuanqi"
 	"xiagu-server/pkg/logger"
 )
 
-const MaxReplyRunes = 150
+// MaxReplyRunes matches the Yuanqi agent's hard reply budget.  Keep this
+// guard in the API too: an upstream prompt is guidance rather than a limit.
+const MaxReplyRunes = 100
 
 type AIService struct {
 	repos  *repository.Repos
 	cfg    *config.Config
 	yuanqi *yuanqi.Client
-	tts    *sovits.Client
+	tts    *TTSService
 }
 
-func NewAIService(repos *repository.Repos, cfg *config.Config, yq *yuanqi.Client, tts *sovits.Client) *AIService {
+func NewAIService(repos *repository.Repos, cfg *config.Config, yq *yuanqi.Client, tts *TTSService) *AIService {
 	return &AIService{repos: repos, cfg: cfg, yuanqi: yq, tts: tts}
 }
 
@@ -40,10 +43,11 @@ type AIChatReq struct {
 }
 
 type AIChatResp struct {
-	Reply       string `json:"reply"`
-	AudioBase64 string `json:"audio_base64,omitempty"`
-	AudioReady  bool   `json:"audio_ready"`
-	Mode        string `json:"mode"`
+	Reply       string      `json:"reply"`
+	AudioBase64 string      `json:"audio_base64,omitempty"`
+	AudioReady  bool        `json:"audio_ready"`
+	Mode        string      `json:"mode"`
+	TTS         TTSResponse `json:"tts"`
 }
 
 // === 对话主函数 ===
@@ -52,9 +56,15 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 	if req.Mode == "" {
 		req.Mode = "normal"
 	}
+	if err := s.repos.AIUsage.Consume(ctx, userID, time.Now(), 5, 50); err != nil {
+		if errors.Is(err, repository.ErrAIRateLimited) {
+			return nil, errcode.RateLimited("AI 对话次数已达上限，请稍后再试")
+		}
+		return nil, err
+	}
 
 	// 1. 获取/创建会话
-	session, err := s.getOrCreateSession(ctx, userID, req.HeroID, req.CityCode)
+	session, err := s.getOrCreateSession(ctx, userID, req.HeroID, req.CityCode, req.Mode)
 	if err != nil {
 		return nil, err
 	}
@@ -91,13 +101,18 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 	msgs = append(msgs, yuanqi.NewTextMessage("user", userMessage))
 
 	// 3. 调用腾讯元器
-	reply, err := s.yuanqi.Chat(ctx, userID, msgs)
+	upstreamContext, cancelUpstream := context.WithTimeout(
+		ctx,
+		s.cfg.Yuanqi.Timeout,
+	)
+	defer cancelUpstream()
+	reply, err := s.yuanqi.Chat(upstreamContext, userID, msgs)
 	if err != nil {
 		logger.Log.Warnf("[AI] 元器调用失败，使用降级回复: %v", err)
 		reply = s.fallbackReply()
 	}
 
-	// 4. 截断到150字
+	// 4. Enforce the reply budget without leaving a visible "..." fragment.
 	reply = s.truncate(reply, MaxReplyRunes)
 
 	// 5. 保存对话历史
@@ -108,7 +123,9 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 	if reply != s.fallbackReply() {
 		newMsgs = append(newMsgs, model.ChatMessage{Role: "assistant", Content: reply, Mode: req.Mode, Timestamp: time.Now()})
 	}
-	s.repos.Session.AppendMessages(ctx, session.ID, newMsgs)
+	if err := s.repos.Session.AppendMessages(ctx, session.ID, newMsgs); err != nil {
+		logger.Log.Warnf("[AI] 保存会话历史失败: %v", err)
+	}
 
 	// 6. 构建响应
 	resp := &AIChatResp{
@@ -116,20 +133,9 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 		AudioReady: false,
 		Mode:       req.Mode,
 	}
-
-	// 7. TTS
-	// 使用独立 context，不受 HTTP 请求超时影响，后台继续合成并缓存
-	if req.NeedTTS {
-		ttsCtx, ttsCancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer ttsCancel()
-
-		audioData, err := s.tts.Synthesize(ttsCtx, reply)
-		if err == nil && len(audioData) > 0 {
-			resp.AudioBase64 = base64.StdEncoding.EncodeToString(audioData)
-			resp.AudioReady = true
-		} else if err != nil {
-			logger.Log.Warnf("[TTS] 语音合成失败: %v", err)
-		}
+	if req.NeedTTS && s.tts != nil {
+		// Tickets are issued after the text reply and never gate its response.
+		resp.TTS = s.tts.BuildResponse(userID, req.HeroID, reply)
 	}
 
 	return resp, nil
@@ -137,8 +143,14 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 
 // === 辅助函数 ===
 
-func (s *AIService) getOrCreateSession(ctx context.Context, userID, heroID, cityCode string) (*model.AISession, error) {
-	session, err := s.repos.Session.GetByUser(ctx, userID)
+func (s *AIService) getOrCreateSession(
+	ctx context.Context,
+	userID string,
+	heroID string,
+	cityCode string,
+	mode string,
+) (*model.AISession, error) {
+	session, err := s.repos.Session.GetByUser(ctx, userID, mode)
 	if err == nil && session != nil {
 		return session, nil
 	}
@@ -148,9 +160,14 @@ func (s *AIService) getOrCreateSession(ctx context.Context, userID, heroID, city
 		HeroID:      heroID,
 		CityCode:    cityCode,
 		Messages:    []model.ChatMessage{},
-		CurrentMode: "normal",
+		CurrentMode: mode,
 	}
 	if err := s.repos.Session.Create(ctx, newSession); err != nil {
+		// Concurrent page requests can create the same user+mode session. The
+		// unique index elects one writer; the loser loads the winning document.
+		if errors.Is(err, database.ErrDuplicateWrite) {
+			return s.repos.Session.GetByUser(ctx, userID, mode)
+		}
 		return nil, err
 	}
 	return newSession, nil
@@ -180,10 +197,10 @@ func (s *AIService) buildPOIContext(poi *model.POI, heroID string) string {
 func (s *AIService) recentValidMessages(msgs []model.ChatMessage, maxMsgs int) []model.ChatMessage {
 	fallbackReply := s.fallbackReply()
 	maxContentLen := 200 // 单条消息最大长度
-	
+
 	// 找到最后N对完整的user-assistant对话（过滤掉降级回复）
 	pairs := []model.ChatMessage{}
-	
+
 	for i := len(msgs) - 1; i >= 1; i-- {
 		if msgs[i].Role == "assistant" && msgs[i-1].Role == "user" {
 			// 跳过降级回复
@@ -191,7 +208,7 @@ func (s *AIService) recentValidMessages(msgs []model.ChatMessage, maxMsgs int) [
 				i-- // 跳过这对消息
 				continue
 			}
-			
+
 			// 截断过长的消息
 			userContent := msgs[i-1].Content
 			assistContent := msgs[i].Content
@@ -201,7 +218,7 @@ func (s *AIService) recentValidMessages(msgs []model.ChatMessage, maxMsgs int) [
 			if len(assistContent) > maxContentLen {
 				assistContent = assistContent[:maxContentLen] + "..."
 			}
-			
+
 			// 倒序添加，最后会反转
 			pairs = append(pairs, model.ChatMessage{Role: "assistant", Content: assistContent})
 			pairs = append(pairs, model.ChatMessage{Role: "user", Content: userContent})
@@ -221,11 +238,28 @@ func (s *AIService) recentValidMessages(msgs []model.ChatMessage, maxMsgs int) [
 }
 
 func (s *AIService) truncate(text string, maxRunes int) string {
-	if utf8.RuneCountInString(text) <= maxRunes {
+	text = strings.TrimSpace(text)
+	if maxRunes <= 0 || utf8.RuneCountInString(text) <= maxRunes {
 		return text
 	}
-	r := []rune(text)
-	return string(r[:maxRunes-3]) + "..."
+
+	runes := []rune(text)
+	limit := minInt(len(runes), maxRunes)
+	// Prefer a completed sentence, then a natural clause boundary.  This keeps
+	// the chat bubble readable while guaranteeing the configured length cap.
+	for i := limit - 1; i >= 0; i-- {
+		if strings.ContainsRune("。！？!?；;", runes[i]) {
+			return strings.TrimSpace(string(runes[:i+1]))
+		}
+	}
+	for i := limit - 1; i >= 0; i-- {
+		if strings.ContainsRune("，、,:：", runes[i]) {
+			return strings.TrimSpace(string(runes[:i])) + "。"
+		}
+	}
+	// An unpunctuated upstream response still gets a clean ending, never an
+	// ellipsis that looks like a rendering failure.
+	return strings.TrimSpace(string(runes[:limit-1])) + "。"
 }
 
 func (s *AIService) fallbackReply() string {

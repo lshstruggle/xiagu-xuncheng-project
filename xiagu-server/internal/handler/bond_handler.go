@@ -49,7 +49,7 @@ func (h *BondHandler) GetHeroBonds(c *gin.Context) {
 	for id, hero := range heroMap {
 		if bond, ok := user.HeroBonds[id]; ok {
 			hero.BondValue = bond.BondValue
-			hero.Level = bond.BondLevel
+			hero.Level = service.BondLevel(bond.BondValue)
 		} else {
 			hero.BondValue = 0
 			hero.Level = 1

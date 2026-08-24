@@ -10,14 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-
+	"xiagu-server/internal/app"
 	"xiagu-server/internal/config"
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/handler"
-	"xiagu-server/internal/middleware"
 	"xiagu-server/internal/repository"
 	"xiagu-server/internal/router"
 	"xiagu-server/internal/service"
@@ -29,40 +25,48 @@ import (
 
 func main() {
 	// 1. 加载配置
-	cfgPath := os.Getenv("CONFIG_PATH")
-	if cfgPath == "" {
-		cfgPath = "configs/config.yaml"
+	cfgPath, err := config.ResolveRuntimeConfigPath(
+		os.Getenv("CONFIG_PATH"),
+		"configs/config.yaml",
+	)
+	if err != nil {
+		log.Fatalf("解析配置来源失败: %v", err)
 	}
+
 	if err := config.Load(cfgPath); err != nil {
 		log.Fatalf("加载配置失败: %v", err)
 	}
+
 	cfg := config.C
+	if err := cfg.Validate(); err != nil {
+		log.Fatalf("配置校验失败：%v", err)
+	}
 
 	// 2. 初始化日志
 	logger.Init(cfg.Server.Mode)
 	logger.Log.Info("峡谷寻城记 Go后端启动中...")
 
-	// 3. 连接MongoDB
-	mongoClient, err := initMongo(cfg.MongoDB)
+	// 3. 初始化 CloudBase 文档数据库 HTTP 客户端
+	databaseClient, err := database.NewHTTPClient(
+		database.HTTPClientConfig{
+			EnvironmentID: cfg.CloudBaseDatabase.EnvironmentID,
+			Instance:      cfg.CloudBaseDatabase.Instance,
+			Database:      cfg.CloudBaseDatabase.Database,
+			BaseURL:       cfg.CloudBaseDatabase.BaseURL,
+			Timeout:       cfg.CloudBaseDatabase.Timeout,
+		},
+		database.StaticToken(cfg.CloudBaseDatabase.APIKey),
+	)
 	if err != nil {
-		log.Fatalf("MongoDB连接失败: %v", err)
+		log.Fatalf("初始化 CloudBase 数据库客户端失败: %v", err)
 	}
-	db := mongoClient.Database(cfg.MongoDB.Database)
-	logger.Log.Info("MongoDB 连接成功")
+	collections := database.NewCollections(
+		databaseClient,
+		cfg.CloudBaseDatabase.CollectionPrefix,
+	)
+	logger.Log.Info("CloudBase 文档数据库 HTTP 客户端已创建")
 
-	// 4. 连接Redis
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     cfg.Redis.Addr,
-		Password: cfg.Redis.Password,
-		DB:       cfg.Redis.DB,
-		PoolSize: cfg.Redis.PoolSize,
-	})
-	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		log.Fatalf("Redis连接失败: %v", err)
-	}
-	logger.Log.Info("Redis 连接成功")
-
-	// 5. 初始化外部客户端
+	// 4. 初始化外部客户端
 	yuanqiClient := yuanqi.NewClient(
 		cfg.Yuanqi.BaseURL,
 		cfg.Yuanqi.Token,
@@ -73,66 +77,81 @@ func main() {
 	)
 	logger.Log.Info("腾讯元器客户端 就绪")
 
+	wechatAuth := wechat.NewAuth(cfg.WeChat.AppID, cfg.WeChat.AppSecret)
 	ttsClient := sovits.NewClient(
+		cfg.TTS.Enabled,
 		cfg.TTS.BaseURL,
+		cfg.TTS.SharedSecret,
 		cfg.TTS.Timeout,
-		cfg.TTS.CacheDir,
+		cfg.TTS.MaxSegmentRunes,
 		logger.Log,
 	)
-	// 设置GPT-SoVITS模型配置
-	ttsClient.SetModelConfig(sovits.ModelConfig{
-		SovitsModel:    cfg.TTS.SovitsModel,
-		GPTModel:       cfg.TTS.GPTModel,
-		ReferenceAudio: cfg.TTS.ReferenceAudio,
-		ReferenceText:  cfg.TTS.ReferenceText,
-		ReferenceLang:  "zh",
-		TextLang:       "zh",
-	})
-	// 设置推理参数（与训练保持一致）
-	ttsClient.SetInferenceParams(sovits.InferenceParams{
-		BatchSize:         cfg.TTS.Inference.BatchSize,
-		SampleSteps:       cfg.TTS.Inference.SampleSteps,
-		SplitInterval:     cfg.TTS.Inference.SplitInterval,
-		Speed:             cfg.TTS.Inference.Speed,
-		TopK:              cfg.TTS.Inference.TopK,
-		TopP:              cfg.TTS.Inference.TopP,
-		Temperature:       cfg.TTS.Inference.Temperature,
-		RepetitionPenalty: cfg.TTS.Inference.RepetitionPenalty,
-	})
-	logger.Log.Info("李白TTS客户端 就绪")
 
-	wechatAuth := wechat.NewAuth(cfg.WeChat.AppID, cfg.WeChat.AppSecret)
-
-	// 6. 初始化各层
-	repos := repository.NewRepos(db, rdb)
-	svcs, err := service.NewServices(repos, cfg, yuanqiClient, ttsClient, wechatAuth)
+	// 5. 初始化各层
+	repos := repository.NewRepos(collections)
+	svcs, err := service.NewServices(repos, cfg, yuanqiClient, wechatAuth, ttsClient)
 	if err != nil {
 		log.Fatalf("初始化服务失败: %v", err)
 	}
-	handlers := handler.NewHandlers(svcs, db)
+	handlers := handler.NewHandlers(svcs, collections)
 
-	// 7. 创建Gin
-	if cfg.Server.Mode == "release" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-	engine := gin.New()
-	engine.Use(gin.Recovery(), middleware.CORS())
+	// 6. 创建Gin
+	engine := app.BuildEngine(
+		cfg.Server.Mode,
+		cfg.Server.AllowedAdminOrigins...,
+	)
 
-	// 8. 注册路由
-	router.Setup(engine, handlers)
+	databaseInitialization := app.NewReadinessGate()
+	app.RegisterReadiness(
+		engine,
+		func(requestContext context.Context) error {
+			if err := databaseInitialization.Check(requestContext); err != nil {
+				return err
+			}
 
-	// 9. 启动
+			pingContext, cancelPing := context.WithTimeout(
+				requestContext,
+				2*time.Second,
+			)
+			defer cancelPing()
+
+			return collections.Ping(pingContext)
+		},
+	)
+
+	// 7. 注册路由
+	router.Setup(engine, handlers, repos.User, cfg.JWT.Secret)
+
+	// 8. 启动
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
+		Addr:    fmt.Sprintf("0.0.0.0:%d", cfg.Server.Port),
 		Handler: engine,
 	}
 
 	go func() {
-		logger.Log.Infof("服务启动: http://localhost:%d", cfg.Server.Port)
+		logger.Log.Infof("服务启动: http://0.0.0.0:%d", cfg.Server.Port)
 		logger.Log.Info("API文档: http://localhost:" + fmt.Sprint(cfg.Server.Port) + "/health")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("启动失败: %v", err)
 		}
+	}()
+
+	// HTTP 云函数必须先监听 9000 端口。数据库索引初始化放到后台，
+	// 避免外部 API 延迟导致 CloudBase 判定端口绑定失败。
+	go func() {
+		indexContext, cancelIndexes := context.WithTimeout(
+			context.Background(),
+			cfg.CloudBaseDatabase.Timeout,
+		)
+		defer cancelIndexes()
+
+		err := database.EnsureCoreIndexes(indexContext, collections)
+		databaseInitialization.Complete(err)
+		if err != nil {
+			logger.Log.Errorf("创建数据库索引失败: %v", err)
+			return
+		}
+		logger.Log.Info("CloudBase 文档数据库索引就绪")
 	}()
 
 	// 10. 优雅关闭
@@ -144,23 +163,5 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	srv.Shutdown(ctx)
-	mongoClient.Disconnect(ctx)
-	rdb.Close()
 	logger.Log.Info("服务已关闭")
-}
-
-func initMongo(cfg config.MongoConfig) (*mongo.Client, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.ConnectTimeout)
-	defer cancel()
-
-	opts := options.Client().
-		ApplyURI(cfg.URI).
-		SetMaxPoolSize(cfg.MaxPoolSize).
-		SetMinPoolSize(cfg.MinPoolSize)
-
-	client, err := mongo.Connect(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-	return client, client.Ping(ctx, nil)
 }

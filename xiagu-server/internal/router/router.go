@@ -7,10 +7,7 @@ import (
 	"xiagu-server/internal/middleware"
 )
 
-func Setup(r *gin.Engine, h *handler.Handlers) {
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok", "service": "xiagu-server"})
-	})
+func Setup(r *gin.Engine, h *handler.Handlers, users middleware.UserStatusReader, jwtSecret string) {
 
 	v1 := r.Group("/api/v1")
 
@@ -18,7 +15,7 @@ func Setup(r *gin.Engine, h *handler.Handlers) {
 	v1.POST("/user/login", h.User.Login)
 
 	// ===== 管理员接口（新增）=====
-	adminHandler := handler.NewAdminHandler()
+	adminHandler := handler.NewAdminHandler(h.DB, jwtSecret)
 	poiAdminHandler := handler.NewPOIAdminHandler(h.DB)
 	merchantAdminHandler := handler.NewMerchantAdminHandler(h.DB)
 	couponAdminHandler := handler.NewCouponAdminHandler(h.DB)
@@ -31,7 +28,7 @@ func Setup(r *gin.Engine, h *handler.Handlers) {
 
 	// 管理员接口组（需要管理员认证）
 	admin := v1.Group("/admin")
-	admin.Use(middleware.AdminAuth())
+	admin.Use(middleware.AdminAuth(jwtSecret))
 	{
 		// 认证
 		admin.POST("/logout", adminHandler.Logout)
@@ -101,10 +98,11 @@ func Setup(r *gin.Engine, h *handler.Handlers) {
 
 	// 需要登录
 	auth := v1.Group("")
-	auth.Use(middleware.Auth())
+	auth.Use(middleware.Auth(users))
 	{
 		// 用户
 		auth.GET("/user/profile", h.User.GetProfile)
+		auth.PUT("/user/profile", h.User.UpdateProfile)
 		auth.PUT("/user/hero", h.User.SelectHero)
 
 		// POI
@@ -113,15 +111,12 @@ func Setup(r *gin.Engine, h *handler.Handlers) {
 		auth.GET("/poi/:id", h.POI.GetDetail)
 		auth.GET("/route/list", h.POI.GetRoutes)
 
-		// AI对话（核心：元器+TTS联动）
+		// AI对话
 		auth.POST("/ai/chat", h.AI.Chat)
+		auth.POST("/ai/tts/segment", h.TTS.Segment)
 
 		// 打卡
 		auth.POST("/checkin", h.Checkin.DoCheckin)
-
-		// TTS
-		auth.POST("/tts", h.TTS.Synthesize)
-		auth.GET("/tts/health", h.TTS.HealthCheck)
 
 		// 彩蛋系统
 		auth.GET("/easter-eggs", h.EasterEgg.GetEasterEggs)
@@ -129,12 +124,6 @@ func Setup(r *gin.Engine, h *handler.Handlers) {
 		auth.GET("/easter-eggs/:id", h.EasterEgg.GetEasterEggByID)
 		auth.POST("/easter-eggs/collect", h.EasterEgg.CollectEasterEgg)
 		auth.GET("/users/:user_id/easter-eggs", h.EasterEgg.GetUserEasterEggCollection)
-
-		// 回忆模式语音
-		auth.GET("/memory-tts", h.MemoryTTS.GetMemoryTTSList)
-		auth.GET("/memory-tts/:id", h.MemoryTTS.GetMemoryTTSByID)
-		auth.GET("/memory-tts/:id/audio", h.MemoryTTS.GetMemoryTTSAudio)
-		auth.GET("/memory-tts/:id/play", h.MemoryTTS.PlayMemoryTTS)
 
 		// 用户资产
 		auth.GET("/user/assets", h.User.GetAssets)
@@ -148,5 +137,21 @@ func Setup(r *gin.Engine, h *handler.Handlers) {
 
 		// 实体周边订单
 		auth.POST("/merch/order", h.Merch.SubmitOrder)
+
+		// Boss挑战（服务端校验距离、完成阈值、冷却与奖励）
+		auth.GET("/challenge/progress", h.Challenge.ListProgress)
+		auth.POST("/challenge/boss/complete", h.Challenge.CompleteBoss)
+
+		// 成就（从云端权威进度计算并持久化已解锁状态）
+		auth.GET("/achievements", h.Achievement.Get)
+		auth.POST("/route/complete", h.RouteProgress.Complete)
+		// 剧情进度（服务端权威状态与奖励）
+		auth.GET("/story/:story_id", h.Story.GetDefinition)
+		auth.GET("/story/:story_id/progress", h.Story.GetProgress)
+		auth.POST("/story/:story_id/start", h.Story.Start)
+		auth.POST("/story/:story_id/advance", h.Story.Advance)
+		auth.POST("/story/:story_id/pause", h.Story.Pause)
+		auth.POST("/story/:story_id/resume", h.Story.Resume)
+		auth.POST("/story/:story_id/reset", h.Story.Reset)
 	}
 }

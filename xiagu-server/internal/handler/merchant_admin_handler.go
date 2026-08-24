@@ -7,20 +7,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"xiagu-server/internal/database"
 	"xiagu-server/internal/model"
 	"xiagu-server/pkg/util"
 )
 
 // MerchantAdminHandler 商户管理接口
 type MerchantAdminHandler struct {
-	db *mongo.Database
+	db *database.Collections
 }
 
 // NewMerchantAdminHandler 创建处理器
-func NewMerchantAdminHandler(db *mongo.Database) *MerchantAdminHandler {
+func NewMerchantAdminHandler(db *database.Collections) *MerchantAdminHandler {
 	return &MerchantAdminHandler{db: db}
 }
 

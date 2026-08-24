@@ -22,6 +22,10 @@ func Conflict(msg string) *AppError {
 	return &AppError{http.StatusConflict, 409, msg}
 }
 
+func RateLimited(msg string) *AppError {
+	return &AppError{http.StatusTooManyRequests, 429, msg}
+}
+
 func Internal(msg string) *AppError {
 	return &AppError{http.StatusInternalServerError, 500, msg}
 }

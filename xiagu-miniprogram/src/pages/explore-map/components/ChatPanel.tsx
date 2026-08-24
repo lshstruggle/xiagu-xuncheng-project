@@ -1,15 +1,14 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { View, Text, Input, ScrollView, Image } from '@tarojs/components'
-import { api } from '@/services/api'
-import { playBase64Audio, stopAudio } from '@/services/tts-player'
+import { api, type TTSSegment } from '@/services/api'
+import { playAIChatSegments, stopAIChatAudio } from '@/services/tts-player'
 import './ChatPanel.scss'
 
 interface Message {
   role: 'user' | 'assistant'
   content: string
   mode?: string
-  hasAudio?: boolean
-  audioBase64?: string
+  ttsSegments?: TTSSegment[]
 }
 
 interface ChatPanelProps {
@@ -25,12 +24,21 @@ export default function ChatPanel({ visible, heroId, cityCode, poiId, onClose }:
   const [inputText, setInputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const chatGeneration = useRef(0)
+
+  useEffect(() => () => stopAIChatAudio(), [])
+
+  useEffect(() => {
+    if (!visible) stopAIChatAudio()
+  }, [visible])
 
   // 发送消息
   const sendMessage = useCallback(async () => {
     if (!inputText.trim() || isLoading) return
 
     const userMsg = inputText.trim()
+    const generation = ++chatGeneration.current
+    stopAIChatAudio()
     setInputText('')
 
     // 添加用户消息
@@ -50,25 +58,25 @@ export default function ChatPanel({ visible, heroId, cityCode, poiId, onClose }:
         need_tts: true,  // 请求TTS语音
       })
 
-      // 添加AI回复
+      if (generation !== chatGeneration.current) return
+      const segments = result.tts?.available ? result.tts.segments : []
       const aiMsg: Message = {
         role: 'assistant',
         content: result.reply,
         mode: result.mode,
-        hasAudio: result.audio_ready,
-        audioBase64: result.audio_base64,
+        ttsSegments: segments,
       }
       setMessages(prev => [...prev, aiMsg])
 
-      // 自动播放语音
-      if (result.audio_ready && result.audio_base64) {
+      // Text is already rendered. Playback failure intentionally leaves it intact.
+      if (segments.length > 0) {
         setIsSpeaking(true)
         try {
-          await playBase64Audio(result.audio_base64)
+          await playAIChatSegments(segments, heroId)
         } catch (e) {
           console.warn('语音播放失败', e)
         }
-        setIsSpeaking(false)
+        if (generation === chatGeneration.current) setIsSpeaking(false)
       }
 
     } catch (error) {
@@ -83,18 +91,24 @@ export default function ChatPanel({ visible, heroId, cityCode, poiId, onClose }:
     setIsLoading(false)
   }, [inputText, isLoading, heroId, cityCode, poiId])
 
-  // 点击消息播放语音
+  // Click replays the cached/generated sentence queue without asking chat again.
   const playMessageAudio = useCallback(async (msg: Message) => {
-    if (!msg.hasAudio || !msg.audioBase64 || isSpeaking) return
+    if (!msg.ttsSegments?.length || isSpeaking) return
     
     setIsSpeaking(true)
     try {
-      await playBase64Audio(msg.audioBase64)
+      await playAIChatSegments(msg.ttsSegments, heroId)
     } catch (e) {
       console.warn('播放失败', e)
     }
     setIsSpeaking(false)
-  }, [isSpeaking])
+  }, [heroId, isSpeaking])
+
+  const closePanel = () => {
+    chatGeneration.current++
+    stopAIChatAudio()
+    onClose()
+  }
 
   if (!visible) return null
 
@@ -112,7 +126,7 @@ export default function ChatPanel({ visible, heroId, cityCode, poiId, onClose }:
           <Text className="chat-panel__hero-name">李白 · 青莲剑仙</Text>
           {isSpeaking && <Text className="chat-panel__speaking">🔊 正在说话...</Text>}
         </View>
-        <View className="chat-panel__close" onClick={onClose}>✕</View>
+        <View className="chat-panel__close" onClick={closePanel}>✕</View>
       </View>
 
       {/* 消息列表 */}
@@ -134,7 +148,7 @@ export default function ChatPanel({ visible, heroId, cityCode, poiId, onClose }:
             )}
             <View className="chat-bubble__content">
               <Text className="chat-bubble__text">{msg.content}</Text>
-              {msg.hasAudio && (
+              {!!msg.ttsSegments?.length && (
                 <Text className="chat-bubble__audio-icon">🔊 点击播放</Text>
               )}
             </View>

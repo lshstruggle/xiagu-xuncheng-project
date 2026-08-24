@@ -2,7 +2,10 @@ package service
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"xiagu-server/internal/config"
 	"xiagu-server/internal/model"
@@ -10,6 +13,9 @@ import (
 	"xiagu-server/pkg/auth"
 	"xiagu-server/pkg/external/wechat"
 )
+
+var ErrUserBanned = errors.New("user banned")
+var ErrInvalidUserProfile = errors.New("invalid user profile")
 
 type UserService struct {
 	repos  *repository.Repos
@@ -34,24 +40,16 @@ func (s *UserService) Login(ctx context.Context, code string) (*LoginResp, error
 	}
 
 	// 2. 查找或创建用户
-	user, err := s.repos.User.GetByOpenID(ctx, wxResp.OpenID)
+	user, err := s.repos.User.FindOrCreateByOpenID(
+		ctx,
+		wxResp.OpenID,
+	)
 	if err != nil {
-		// 新用户
-		user = &model.User{
-			OpenID:         wxResp.OpenID,
-			Nickname:       "召唤师",
-			CurrentHeroID:  "libai",
-			HeroBonds:      map[string]*model.HeroBond{},
-			ExploredCities: map[string]*model.CityProgress{},
-			Badges:         []string{},
-			SpiritBadges:   []string{},
-			BondBookmarks:  []string{},
-			KnowledgeCards: []string{},
-			Coupons:        []model.UserCoupon{},
-		}
-		if err := s.repos.User.Create(ctx, user); err != nil {
-			return nil, err
-		}
+		return nil, err
+	}
+
+	if user.Status == "banned" {
+		return nil, ErrUserBanned
 	}
 
 	// 3. 生成JWT
@@ -65,6 +63,35 @@ func (s *UserService) Login(ctx context.Context, code string) (*LoginResp, error
 
 func (s *UserService) GetProfile(ctx context.Context, userID string) (*model.User, error) {
 	return s.repos.User.GetByID(ctx, userID)
+}
+
+func (s *UserService) UpdateProfile(
+	ctx context.Context,
+	userID string,
+	nickname string,
+	avatar string,
+) (*model.User, error) {
+	nickname = strings.TrimSpace(nickname)
+	avatar = strings.TrimSpace(avatar)
+
+	if err := validateUserProfile(nickname, avatar); err != nil {
+		return nil, ErrInvalidUserProfile
+	}
+
+	if err := s.repos.User.UpdateProfile(ctx, userID, nickname, avatar); err != nil {
+		return nil, err
+	}
+	return s.repos.User.GetByID(ctx, userID)
+}
+
+func validateUserProfile(nickname string, avatar string) error {
+	if count := utf8.RuneCountInString(nickname); count < 1 || count > 20 {
+		return ErrInvalidUserProfile
+	}
+	if len(avatar) > 2048 || !strings.HasPrefix(avatar, "cloud://") {
+		return ErrInvalidUserProfile
+	}
+	return nil
 }
 
 func (s *UserService) GetAssets(ctx context.Context, userID string) (heroFrag, skinFrag int, err error) {

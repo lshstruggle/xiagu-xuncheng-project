@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"xiagu-server/internal/config"
@@ -52,30 +52,55 @@ type CheckinResp struct {
 	Message         string             `json:"message"`
 }
 
-// 碎片奖励配置表（按 POI Type 映射）
-// 返回 [英雄碎片min, 英雄碎片max, 皮肤碎片min, 皮肤碎片max]
-var fragmentMap = map[model.POIType][4]int{
-	model.POIBlueBuff:         {2, 3, 1, 1},   // ★ 普通
-	model.POIRedBuff:          {3, 5, 1, 2},   // ★★ 中等
-	model.POITower:            {5, 8, 2, 3},   // ★★★ 高级
-	model.POIPlayerFootprint:  {5, 8, 2, 3},   // ★★★ 特殊
-	model.POISpiritLighthouse: {8, 15, 3, 5},  // ★★★★★ 稀有
+func normalizeHeroID(heroID string) string {
+	if heroID == "li_bai" {
+		return "libai"
+	}
+	return heroID
 }
 
-// 计算随机碎片数量
-func calcFragments(poiType model.POIType, isFirstTime bool) (hero, skin int) {
-	rng, ok := fragmentMap[poiType]
-	if !ok {
-		rng = fragmentMap[model.POIBlueBuff]
+func configuredFragments(
+	reward *model.POIReward,
+	isFirstTime bool,
+) (hero int, skin int, err error) {
+	if reward == nil || reward.Fragments == nil {
+		return 0, 0, errors.New("fragment reward is not configured")
 	}
-	hero = rng[0] + rand.Intn(rng[1]-rng[0]+1)
-	skin = rng[2] + rand.Intn(rng[3]-rng[2]+1)
 
-	if isFirstTime {
-		hero *= 2
-		skin *= 2
+	config := reward.Fragments
+	if config.HeroFragments < 0 || config.SkinFragments < 0 {
+		return 0, 0, errors.New("fragment reward cannot be negative")
 	}
-	return
+	if config.FirstCheckinMultiplier < 1 {
+		return 0, 0, errors.New("first check-in multiplier must be at least one")
+	}
+
+	multiplier := 1
+	if isFirstTime {
+		multiplier = config.FirstCheckinMultiplier
+	}
+	return config.HeroFragments * multiplier,
+		config.SkinFragments * multiplier,
+		nil
+}
+
+func configuredRewardItems(reward *model.POIReward) []model.RewardItem {
+	if reward == nil || len(reward.Items) == 0 {
+		return []model.RewardItem{}
+	}
+	return append([]model.RewardItem(nil), reward.Items...)
+}
+
+func appendRewardIfMissing(
+	rewards []model.RewardItem,
+	reward model.RewardItem,
+) []model.RewardItem {
+	for _, existing := range rewards {
+		if existing.Type == reward.Type && existing.ID == reward.ID {
+			return rewards
+		}
+	}
+	return append(rewards, reward)
 }
 
 func (s *CheckinService) DoCheckin(ctx context.Context, userID string, req *CheckinReq) (*CheckinResp, error) {
@@ -87,6 +112,11 @@ func (s *CheckinService) DoCheckin(ctx context.Context, userID string, req *Chec
 	if poi.Status != "active" {
 		return nil, errcode.BadRequest("POI已关闭")
 	}
+	if _, _, err := configuredFragments(poi.Rewards, false); err != nil {
+		return nil, errcode.Internal("POI奖励配置错误")
+	}
+	canonicalPOIID := poi.ID.Hex()
+	heroID := normalizeHeroID(req.HeroID)
 
 	// 2. 距离校验
 	poiLat := poi.Location.Coordinates[1]
@@ -98,36 +128,25 @@ func (s *CheckinService) DoCheckin(ctx context.Context, userID string, req *Chec
 		return nil, errcode.BadRequest(fmt.Sprintf("距离太远（%.0f米），请靠近至%.0f米内", distance, maxDist))
 	}
 
-	// 3. 防重复
-	cooldownSince := time.Now().Add(-time.Duration(s.cfg.LBS.CheckinCooldown) * time.Second)
-	exists, _ := s.repos.Checkin.ExistsByUserPOI(ctx, userID, req.POIID, cooldownSince)
-	if exists {
-		return nil, errcode.Conflict("24小时内已打卡过")
-	}
-
-	// 4. 计算奖励
-	rewards := make([]model.RewardItem, 0)
-	bondValue := 0
-	if poi.Rewards != nil {
-		bondValue = poi.Rewards.BondValue
-	}
+	// 4. 奖励金额和物品完全来自 POI 配置。
+	rewards := configuredRewardItems(poi.Rewards)
+	bondValue := poi.Rewards.BondValue
 
 	var spiritBadge, bondBookmark string
 	var aiTrigger *AITrigger
 
 	switch poi.Type {
-	case model.POIBlueBuff:
-		rewards = append(rewards, model.RewardItem{Type: "knowledge_card", ID: poi.ID.Hex(), Name: poi.Name + "知识卡"})
-	case model.POIRedBuff:
-		bondValue += 10
-	case model.POITower:
-		bondValue += 30
 	case model.POISpiritLighthouse:
 		if poi.SpiritEvent != nil {
 			spiritBadge = poi.SpiritEvent.BadgeID
-			rewards = append(rewards, model.RewardItem{Type: "spirit_badge", ID: spiritBadge, Name: poi.SpiritEvent.SpiritKeyword})
-			bondValue += 50
-			narration := poi.SpiritEvent.HeroNarration[req.HeroID]
+			if spiritBadge != "" {
+				rewards = appendRewardIfMissing(rewards, model.RewardItem{
+					Type: "spirit_badge",
+					ID:   spiritBadge,
+					Name: poi.SpiritEvent.SpiritKeyword,
+				})
+			}
+			narration := poi.SpiritEvent.HeroNarration[heroID]
 			if narration == "" {
 				narration = poi.SpiritEvent.EventName
 			}
@@ -136,9 +155,14 @@ func (s *CheckinService) DoCheckin(ctx context.Context, userID string, req *Chec
 	case model.POIPlayerFootprint:
 		if poi.PlayerBond != nil {
 			bondBookmark = poi.PlayerBond.BookmarkID
-			rewards = append(rewards, model.RewardItem{Type: "bond_bookmark", ID: bondBookmark, Name: poi.PlayerBond.TeamName + "羁绊书签"})
-			bondValue += 30
-			narration := poi.PlayerBond.HeroNarration[req.HeroID]
+			if bondBookmark != "" {
+				rewards = appendRewardIfMissing(rewards, model.RewardItem{
+					Type: "bond_bookmark",
+					ID:   bondBookmark,
+					Name: poi.PlayerBond.TeamName + "羁绊书签",
+				})
+			}
+			narration := poi.PlayerBond.HeroNarration[heroID]
 			if narration == "" {
 				narration = poi.PlayerBond.Story
 			}
@@ -146,41 +170,77 @@ func (s *CheckinService) DoCheckin(ctx context.Context, userID string, req *Chec
 		}
 	}
 
-	// 5. 计算碎片奖励（按 POI 名称判断是否首次打卡）
-	isFirstTime, _ := s.repos.Checkin.IsFirstTimeCheckinByName(ctx, userID, poi.Name)
-	heroFrag, skinFrag := calcFragments(poi.Type, isFirstTime)
+	var isFirstTime bool
+	var heroFrag, skinFrag int
+	err = s.repos.Checkin.WithTransaction(ctx, func(transactionContext context.Context) error {
+		cooldownSince := time.Now().Add(
+			-time.Duration(s.cfg.LBS.CheckinCooldown) * time.Second,
+		)
+		isFirstTime, err = s.repos.Checkin.AcquireCooldownGuard(
+			transactionContext,
+			userID,
+			canonicalPOIID,
+			cooldownSince,
+		)
+		if errors.Is(err, repository.ErrCheckinCooldown) {
+			return errcode.Conflict("24小时内已打卡过")
+		}
+		if err != nil {
+			return fmt.Errorf("check check-in cooldown: %w", err)
+		}
 
-	// 6. 写打卡记录
-	record := &model.Checkin{
-		UserID:          userID,
-		POIID:           req.POIID,
-		POIName:         poi.Name,
-		CityCode:        poi.CityCode,
-		Location:        model.GeoPoint{Type: "Point", Coordinates: []float64{req.UserLng, req.UserLat}},
-		POIType:         poi.Type,
-		Rewards:         rewards,
-		HeroFragments:   heroFrag,
-		SkinFragments:   skinFrag,
-		IsFirstTime:     isFirstTime,
-		SpiritTriggered: spiritBadge != "",
-		BondTriggered:   bondBookmark != "",
-		CheckinAt:       time.Now(),
-	}
-	s.repos.Checkin.Create(ctx, record)
+		heroFrag, skinFrag, err = configuredFragments(
+			poi.Rewards,
+			isFirstTime,
+		)
+		if err != nil {
+			return fmt.Errorf("calculate configured fragments: %w", err)
+		}
 
-	// 7. 更新用户
-	s.repos.User.UpdateAfterCheckin(ctx, userID, &repository.CheckinUpdate{
-		CityCode:         poi.CityCode,
-		POIID:            req.POIID,
-		HeroID:           req.HeroID,
-		BondValueInc:     bondValue,
-		HeroFragmentInc:  heroFrag,
-		SkinFragmentInc:  skinFrag,
-		SpiritBadgeID:    spiritBadge,
-		BondBookmarkID:   bondBookmark,
-		SpiritLighthouse: poi.Type == model.POISpiritLighthouse,
-		PlayerFootprint:  poi.Type == model.POIPlayerFootprint,
+		record := &model.Checkin{
+			UserID:          userID,
+			POIID:           canonicalPOIID,
+			POICode:         poi.POICode,
+			POIName:         poi.Name,
+			CityCode:        poi.CityCode,
+			Location:        model.GeoPoint{Type: "Point", Coordinates: []float64{req.UserLng, req.UserLat}},
+			POIType:         poi.Type,
+			Rewards:         rewards,
+			HeroFragments:   heroFrag,
+			SkinFragments:   skinFrag,
+			IsFirstTime:     isFirstTime,
+			SpiritTriggered: spiritBadge != "",
+			BondTriggered:   bondBookmark != "",
+			CheckinAt:       time.Now(),
+		}
+		if err := s.repos.Checkin.Create(transactionContext, record); err != nil {
+			return fmt.Errorf("create check-in: %w", err)
+		}
+
+		if err := s.repos.User.UpdateAfterCheckin(
+			transactionContext,
+			userID,
+			&repository.CheckinUpdate{
+				CityCode:         poi.CityCode,
+				POIID:            canonicalPOIID,
+				HeroID:           heroID,
+				BondValueInc:     bondValue,
+				HeroFragmentInc:  heroFrag,
+				SkinFragmentInc:  skinFrag,
+				SpiritBadgeID:    spiritBadge,
+				BondBookmarkID:   bondBookmark,
+				SpiritLighthouse: poi.Type == model.POISpiritLighthouse,
+				PlayerFootprint:  poi.Type == model.POIPlayerFootprint,
+				RewardItems:      rewards,
+			},
+		); err != nil {
+			return fmt.Errorf("apply check-in rewards: %w", err)
+		}
+		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	fragReward := &FragmentReward{
 		HeroFragments: heroFrag,

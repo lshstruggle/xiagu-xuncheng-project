@@ -31,6 +31,9 @@ func (h *AIHandler) Chat(c *gin.Context) {
 
 	result, err := h.svcs.AI.Chat(c.Request.Context(), userID, &req)
 	if err != nil {
+		if util.AppError(c, err) {
+			return
+		}
 		util.ServerError(c, err.Error())
 		return
 	}

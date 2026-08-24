@@ -11,6 +11,7 @@ import StoryDialog from '../../components/story-dialog'
 import StoryRoute from '../../components/story-route'
 import WebPet from '../../components/web-pet'
 import FutureBg from '../../components/future-bg'
+import UserProfileModal from '../../components/user-profile-modal'
 import TowerQuizModal from '../../components/tower-quiz-modal'
 import TowerMatch3Modal from '../../components/tower-match3-modal'
 import BossMatchModal from '../../components/boss-match-modal'
@@ -28,7 +29,7 @@ import { getTempFileURL, preloadAllTempURLs } from '../../utils/temp-url-cache'
 import { heroAvatarFileIDs, bottomIconFileIDs, getHeroAvatar, getBottomIcon, preloadAllCloudImages } from '../../utils/cloud-assets'
 import './index.scss'
 import { api } from '../../services/api'
-import { playBase64Audio } from '../../services/tts-player'
+import { playAIChatSegments, stopAIChatAudio } from '../../services/tts-player'
 import { doLogin, isLoggedIn, getUser } from '../../services/auth'
 import { shouldShowDailyReport } from '../../services/daily-report'
 import type { MVPReportData } from '../../services/daily-report'
@@ -2337,6 +2338,7 @@ export default function Checkin() {
 
   // 关闭聊天面板
   const closeChatPanel = () => {
+    stopAIChatAudio()
     setShowChatPanel(false)
     // 重置高度
     setChatPanelHeight(65)
@@ -2475,6 +2477,7 @@ export default function Checkin() {
     if (!chatInput.trim() || isChatLoading) return
 
     const userMessage = chatInput.trim()
+    stopAIChatAudio()
     setChatInput('')
 
     // 添加用户消息
@@ -2496,9 +2499,9 @@ export default function Checkin() {
       // 先结束loading状态，让用户看到回复
       setIsChatLoading(false)
 
-      // 异步播放语音，不阻塞UI
-      if (result.audio_ready && result.audio_base64) {
-        playBase64Audio(result.audio_base64).catch((e) => {
+      // Text is visible before TTS; voice failure degrades silently to text.
+      if (result.tts?.available && result.tts.segments.length) {
+        playAIChatSegments(result.tts.segments, 'libai').catch((e) => {
           console.warn('语音播放失败', e)
         })
       }
@@ -3817,6 +3820,7 @@ export default function Checkin() {
           </View>
         </View>
       )}
+      <UserProfileModal user={userInfo} onSaved={setUserInfo} />
     </View>
   )
 }
