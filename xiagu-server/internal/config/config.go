@@ -45,6 +45,7 @@ type JWTConfig struct {
 
 type YuanqiConfig struct {
 	BaseURL     string        `mapstructure:"base_url"`
+	Token       string        `mapstructure:"token"`
 	AssistantID string        `mapstructure:"assistant_id"`
 	Timeout     time.Duration `mapstructure:"timeout"`
 	MaxRetries  int           `mapstructure:"max_retries"`
@@ -63,14 +64,11 @@ type InferenceParams struct {
 }
 
 type TTSConfig struct {
-	BaseURL        string          `mapstructure:"base_url"`
-	Timeout        time.Duration   `mapstructure:"timeout"`
-	CacheDir       string          `mapstructure:"cache_dir"`
-	SovitsModel    string          `mapstructure:"sovits_model_path"`
-	GPTModel       string          `mapstructure:"gpt_model_path"`
-	ReferenceAudio string          `mapstructure:"reference_audio"`
-	ReferenceText  string          `mapstructure:"reference_text"`
-	Inference      InferenceParams `mapstructure:"inference_params"`
+	Enabled         bool          `mapstructure:"enabled"`
+	BaseURL         string        `mapstructure:"base_url"`
+	SharedSecret    string        `mapstructure:"shared_secret"`
+	Timeout         time.Duration `mapstructure:"timeout"`
+	MaxSegmentRunes int           `mapstructure:"max_segment_runes"`
 }
 
 type LBSConfig struct {
@@ -128,7 +126,14 @@ func bindCloudEnvironment(v *viper.Viper) error {
 		{configKey: "jwt.secret", envKey: "JWT_SECRET"},
 
 		{configKey: "yuanqi.base_url", envKey: "YUANQI_BASE_URL"},
+		{configKey: "yuanqi.token", envKey: "YUANQI_TOKEN"},
 		{configKey: "yuanqi.assistant_id", envKey: "YUANQI_ASSISTANT_ID"},
+
+		{configKey: "tts.enabled", envKey: "TTS_ENABLED"},
+		{configKey: "tts.base_url", envKey: "TTS_BASE_URL"},
+		{configKey: "tts.shared_secret", envKey: "TTS_SHARED_SECRET"},
+		{configKey: "tts.timeout", envKey: "TTS_TIMEOUT"},
+		{configKey: "tts.max_segment_runes", envKey: "TTS_MAX_SEGMENT_RUNES"},
 	}
 
 	for _, binding := range bindings {
@@ -156,6 +161,9 @@ func setServerlessDefaults(v *viper.Viper) {
 
 	v.SetDefault("yuanqi.timeout", 15*time.Second)
 	v.SetDefault("yuanqi.max_retries", 2)
+	v.SetDefault("tts.enabled", false)
+	v.SetDefault("tts.timeout", 90*time.Second)
+	v.SetDefault("tts.max_segment_runes", 35)
 
 	v.SetDefault("lbs.default_trigger_radius", 80)
 	v.SetDefault("lbs.distance_tolerance", 1.2)

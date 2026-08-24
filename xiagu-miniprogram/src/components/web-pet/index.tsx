@@ -1,8 +1,8 @@
-import { View, Text, Image, Input } from '@tarojs/components'
+import { View, Text, Image, Input, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { api } from '../../services/api'
-import { playBase64Audio } from '../../services/tts-player'
+import { playAIChatSegments, stopAIChatAudio } from '../../services/tts-player'
 import { doLogin, isLoggedIn } from '../../services/auth'
 import { petFileIDs, getCachedImageByFileID } from '../../utils/cloud-assets'
 import './index.scss'
@@ -256,6 +256,11 @@ export default function WebPet({ heroAvatarUrl, heroName = '李白', onDragState
     }
   }
 
+  // Touches inside the chat must belong to the message scroller, not the pet drag layer.
+  const stopChatTouchPropagation = (e: any) => {
+    e.stopPropagation()
+  }
+
   // 边缘吸附（更贴近边界）
   const snapToEdge = () => {
     const { width } = screenRef.current
@@ -317,6 +322,7 @@ export default function WebPet({ heroAvatarUrl, heroName = '李白', onDragState
     setInputText('')
     setDialogue('')
     setIsWaiting(false)
+    stopAIChatAudio()
   }
 
   // ========== 发送消息 ==========
@@ -342,6 +348,7 @@ export default function WebPet({ heroAvatarUrl, heroName = '李白', onDragState
     }
 
     setInputText('')
+    stopAIChatAudio()
     setChatHistory(prev => [...prev, { role: 'user', content: text }])
     setIsWaiting(true)
     setState('thinking')
@@ -358,9 +365,9 @@ export default function WebPet({ heroAvatarUrl, heroName = '李白', onDragState
       setChatHistory(prev => [...prev, { role: 'ai', content: result.reply }])
       setIsWaiting(false)
 
-      // 异步播放语音
-      if (result.audio_ready && result.audio_base64) {
-        playBase64Audio(result.audio_base64).catch((e: any) => {
+      // Text is never blocked by a slow or unavailable TTS gateway.
+      if (result.tts?.available && result.tts.segments.length) {
+        playAIChatSegments(result.tts.segments, 'libai').catch((e: any) => {
           console.warn('语音播放失败', e)
         })
       }
@@ -416,11 +423,17 @@ export default function WebPet({ heroAvatarUrl, heroName = '李白', onDragState
 
         {/* ===== 聊天模式气泡 ===== */}
         {showBubble && isChatMode && (
-          <View className={`web-pet-chat ${isLeftSide ? 'chat-right' : 'chat-left'}`}>
+          <View
+            className={`web-pet-chat ${isLeftSide ? 'chat-right' : 'chat-left'}`}
+            onTouchStart={stopChatTouchPropagation}
+            onTouchMove={stopChatTouchPropagation}
+            onTouchEnd={stopChatTouchPropagation}
+            onTouchCancel={stopChatTouchPropagation}
+          >
             <View className='web-pet-chat-close' onClick={handleClose}>✕</View>
 
             {/* 消息列表 */}
-            <View className='web-pet-chat-scroll'>
+            <ScrollView className='web-pet-chat-scroll' scrollY scrollWithAnimation>
               {chatHistory.map((msg, i) => (
                 <View key={i} className={`web-pet-msg ${msg.role === 'user' ? 'msg-user' : 'msg-ai'}`}>
                   {msg.role === 'ai' && heroAvatarUrl && (
@@ -439,7 +452,7 @@ export default function WebPet({ heroAvatarUrl, heroName = '李白', onDragState
                   </View>
                 </View>
               )}
-            </View>
+            </ScrollView>
 
             {/* 输入区 */}
             {isUserLoggedIn ? (

@@ -75,6 +75,7 @@ func TestLoadCloudEnvironmentAndServerlessDefaults(t *testing.T) {
 	t.Setenv("WECHAT_APP_SECRET", "wechat-app-secret")
 	t.Setenv("JWT_SECRET", "test-jwt-secret")
 	t.Setenv("YUANQI_BASE_URL", "https://yuanqi.example/v1/chat")
+	t.Setenv("YUANQI_TOKEN", "yuanqi-token")
 	t.Setenv("YUANQI_ASSISTANT_ID", "assistant-id")
 
 	if err := Load(""); err != nil {
@@ -107,6 +108,9 @@ func TestLoadCloudEnvironmentAndServerlessDefaults(t *testing.T) {
 
 	if C.Yuanqi.BaseURL != "https://yuanqi.example/v1/chat" {
 		t.Fatalf("expected Yuanqi base URL %q, got %q", "https://yuanqi.example/v1/chat", C.Yuanqi.BaseURL)
+	}
+	if C.Yuanqi.Token != "yuanqi-token" {
+		t.Fatal("expected Yuanqi token from environment")
 	}
 
 	if C.Server.Port != 9000 {

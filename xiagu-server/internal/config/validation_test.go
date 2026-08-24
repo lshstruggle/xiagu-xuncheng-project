@@ -196,3 +196,19 @@ func TestValidateAcceptsMissingOptionalYuanqiCredentials(t *testing.T) {
 		t.Fatalf("expected Yuanqi credentials to be optional, got %v", err)
 	}
 }
+
+func TestValidateTTSOnlyWhenEnabled(t *testing.T) {
+	cfg := validConfigForValidation()
+	cfg.TTS.Enabled = true
+	if err := cfg.Validate(); err == nil || !strings.Contains(err.Error(), "tts.base_url") {
+		t.Fatalf("expected missing enabled TTS configuration error, got %v", err)
+	}
+
+	cfg.TTS.BaseURL = "https://tts.example.com"
+	cfg.TTS.SharedSecret = "shared-secret"
+	cfg.TTS.Timeout = 15 * time.Second
+	cfg.TTS.MaxSegmentRunes = 35
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("expected enabled TTS config to validate, got %v", err)
+	}
+}

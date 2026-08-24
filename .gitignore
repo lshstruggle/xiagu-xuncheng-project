@@ -43,7 +43,13 @@ xiagu-tts-local-assets.tar.gz
 
 # Large third-party runtimes and AI model weights
 GPT-SoVITS/
-models/
+models/*
+!models/libai/
+models/libai/*
+!models/libai/README_Mac_M4_Migration.md
+!models/libai/api_usage_mac.py
+!models/libai/reference.wav
+!models/libai/reference_text.txt
 *.ckpt
 *.pth
 *.pt

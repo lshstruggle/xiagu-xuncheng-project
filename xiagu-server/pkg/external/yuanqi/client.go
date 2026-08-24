@@ -70,18 +70,20 @@ type chatResponse struct {
 
 type Client struct {
 	baseURL     string
+	token       string
 	assistantID string
 	httpClient  *http.Client
 	maxRetries  int
 	logger      *zap.SugaredLogger
 }
 
-func NewClient(baseURL, assistantID string, timeout time.Duration, maxRetries int, logger *zap.SugaredLogger) *Client {
+func NewClient(baseURL, token, assistantID string, timeout time.Duration, maxRetries int, logger *zap.SugaredLogger) *Client {
 	if logger == nil {
 		logger = zap.NewNop().Sugar()
 	}
 	return &Client{
 		baseURL:     baseURL,
+		token:       token,
 		assistantID: assistantID,
 		httpClient:  &http.Client{Timeout: timeout},
 		maxRetries:  maxRetries,
@@ -143,6 +145,7 @@ func (c *Client) Chat(ctx context.Context, userID string, messages []Message) (s
 		}
 
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+c.token)
 		req.Header.Set("X-Source", "openapi")
 
 		resp, err := c.httpClient.Do(req)
@@ -192,6 +195,7 @@ func (c *Client) Chat(ctx context.Context, userID string, messages []Message) (s
 // and AIService can return its fixed fallback reply.
 func (c *Client) Configured() bool {
 	return strings.TrimSpace(c.baseURL) != "" &&
+		strings.TrimSpace(c.token) != "" &&
 		strings.TrimSpace(c.assistantID) != ""
 }
 

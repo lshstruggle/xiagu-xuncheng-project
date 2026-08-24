@@ -3,6 +3,7 @@ package yuanqi
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -10,7 +11,7 @@ import (
 )
 
 func TestClientRejectsUnconfiguredUpstream(t *testing.T) {
-	client := NewClient("", "", time.Second, 0, nil)
+	client := NewClient("", "", "", time.Second, 0, nil)
 
 	_, err := client.Chat(context.Background(), "user-id", nil)
 	if err == nil || !strings.Contains(err.Error(), "未配置") {
@@ -27,6 +28,7 @@ func (function roundTripFunc) RoundTrip(request *http.Request) (*http.Response, 
 func TestClientRetryBackoffHonorsContext(t *testing.T) {
 	client := NewClient(
 		"https://yuanqi.example/chat",
+		"test-token",
 		"assistant-id",
 		time.Second,
 		2,
@@ -51,6 +53,7 @@ func TestClientRetryBackoffHonorsContext(t *testing.T) {
 func TestClientConfigured(t *testing.T) {
 	client := NewClient(
 		"https://yuanqi.example/chat",
+		"test-token",
 		"assistant-id",
 		time.Second,
 		0,
@@ -59,5 +62,24 @@ func TestClientConfigured(t *testing.T) {
 
 	if !client.Configured() {
 		t.Fatal("expected complete Yuanqi configuration")
+	}
+}
+
+func TestClientSendsBearerToken(t *testing.T) {
+	client := NewClient("https://yuanqi.example/chat", "test-token", "assistant-id", time.Second, 0, nil)
+	client.httpClient.Transport = roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		if got, want := request.Header.Get("Authorization"), "Bearer test-token"; got != want {
+			t.Fatalf("Authorization header = %q, want %q", got, want)
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     make(http.Header),
+			Body:       io.NopCloser(strings.NewReader(`{"choices":[{"message":{"content":"ok"}}]}`)),
+		}, nil
+	})
+
+	reply, err := client.Chat(context.Background(), "user-id", []Message{NewTextMessage("user", "hello")})
+	if err != nil || reply != "ok" {
+		t.Fatalf("Chat() = %q, %v; want ok, nil", reply, err)
 	}
 }

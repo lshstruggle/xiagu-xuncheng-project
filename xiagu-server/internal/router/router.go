@@ -113,6 +113,7 @@ func Setup(r *gin.Engine, h *handler.Handlers, users middleware.UserStatusReader
 
 		// AI对话
 		auth.POST("/ai/chat", h.AI.Chat)
+		auth.POST("/ai/tts/segment", h.TTS.Segment)
 
 		// 打卡
 		auth.POST("/checkin", h.Checkin.DoCheckin)

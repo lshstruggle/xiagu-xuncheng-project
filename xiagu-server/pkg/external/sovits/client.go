@@ -1,212 +1,152 @@
+// Package sovits is a narrow client for the protected CloudStudio TTS gateway.
+// It never sends model paths, reference audio paths, or inference parameters.
 package sovits
 
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
-	"os"
-	"path/filepath"
+	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"go.uber.org/zap"
 )
 
-// ModelConfig 模型配置
-type ModelConfig struct {
-	SovitsModel    string  `json:"sovits_model_path,omitempty"`
-	GPTModel       string  `json:"gpt_model_path,omitempty"`
-	ReferenceAudio string  `json:"refer_wav_path,omitempty"`
-	ReferenceText  string  `json:"prompt_text,omitempty"`
-	ReferenceLang  string  `json:"prompt_language,omitempty"`
-	TextLang       string  `json:"text_language,omitempty"`
+var (
+	ErrDisabled       = errors.New("tts is disabled")
+	ErrCircuitOpen    = errors.New("tts circuit is open")
+	ErrUnavailable    = errors.New("tts unavailable")
+	ErrInvalidAudio   = errors.New("tts returned invalid wav")
+	ErrSegmentTooLong = errors.New("tts segment too long")
+)
+
+type Result struct {
+	Audio []byte
+	Cache string
 }
 
-// InferenceParams 推理参数
-type InferenceParams struct {
-	BatchSize         int     `json:"batch_size,omitempty"`
-	SampleSteps       int     `json:"sample_steps,omitempty"`
-	SplitInterval     float64 `json:"split_interval,omitempty"`
-	Speed             float64 `json:"speed,omitempty"`
-	TopK              int     `json:"top_k,omitempty"`
-	TopP              float64 `json:"top_p,omitempty"`
-	Temperature       float64 `json:"temperature,omitempty"`
-	RepetitionPenalty float64 `json:"repetition_penalty,omitempty"`
-}
-
-// Client GPT-SoVITS TTS客户端
 type Client struct {
-	baseURL    string
-	httpClient *http.Client
-	cacheDir   string
-	mu         sync.Mutex
-	logger     *zap.SugaredLogger
-	model      ModelConfig
-	inference  InferenceParams
+	enabled  bool
+	baseURL  string
+	secret   string
+	maxRunes int
+	http     *http.Client
+	logger   *zap.SugaredLogger
+
+	mu               sync.Mutex
+	consecutiveFails int
+	circuitUntil     time.Time
 }
 
-// NewClient 创建TTS客户端
-func NewClient(baseURL string, timeout time.Duration, cacheDir string, logger *zap.SugaredLogger) *Client {
-	os.MkdirAll(cacheDir, 0755)
+func NewClient(enabled bool, baseURL, secret string, timeout time.Duration, maxRunes int, log *zap.SugaredLogger) *Client {
+	if maxRunes <= 0 {
+		maxRunes = 35
+	}
+	if timeout <= 0 {
+		timeout = 90 * time.Second
+	}
+	transport := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           (&net.Dialer{Timeout: 3 * time.Second, KeepAlive: 30 * time.Second}).DialContext,
+		TLSHandshakeTimeout:   3 * time.Second,
+		ResponseHeaderTimeout: timeout,
+		IdleConnTimeout:       30 * time.Second,
+		MaxIdleConns:          2,
+		MaxIdleConnsPerHost:   2,
+		MaxConnsPerHost:       2,
+	}
 	return &Client{
-		baseURL:    baseURL,
-		httpClient: &http.Client{Timeout: timeout},
-		cacheDir:   cacheDir,
-		logger:     logger,
+		enabled:  enabled,
+		baseURL:  strings.TrimRight(strings.TrimSpace(baseURL), "/"),
+		secret:   secret,
+		maxRunes: maxRunes,
+		http:     &http.Client{Transport: transport, Timeout: timeout},
+		logger:   log,
 	}
 }
 
-// SetModelConfig 设置模型配置
-func (c *Client) SetModelConfig(cfg ModelConfig) {
-	c.model = cfg
+func (c *Client) Available(now time.Time) bool {
+	if !c.enabled || c.baseURL == "" || c.secret == "" {
+		return false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return !now.Before(c.circuitUntil)
 }
 
-// SetInferenceParams 设置推理参数
-func (c *Client) SetInferenceParams(params InferenceParams) {
-	c.inference = params
-}
-
-// Synthesize 将文本转为李白语音，返回WAV音频字节
-func (c *Client) Synthesize(ctx context.Context, text string) ([]byte, error) {
-	if text == "" {
-		return nil, fmt.Errorf("text is empty")
+func (c *Client) Synthesize(ctx context.Context, text string) (Result, error) {
+	text = strings.TrimSpace(text)
+	if !c.enabled || c.baseURL == "" || c.secret == "" {
+		return Result{}, ErrDisabled
+	}
+	if utf8.RuneCountInString(text) == 0 {
+		return Result{}, fmt.Errorf("empty tts text: %w", ErrUnavailable)
+	}
+	if utf8.RuneCountInString(text) > c.maxRunes {
+		return Result{}, ErrSegmentTooLong
+	}
+	if !c.Available(time.Now()) {
+		return Result{}, ErrCircuitOpen
 	}
 
-	// 限制长度
-	textRunes := []rune(text)
-	if len(textRunes) > 200 {
-		text = string(textRunes[:200])
-	}
-
-	// 1. 检查本地缓存
-	cacheKey := c.hashText(text)
-	cachePath := filepath.Join(c.cacheDir, cacheKey+".wav")
-
-	if data, err := os.ReadFile(cachePath); err == nil {
-		c.logger.Infof("[TTS缓存命中] %s...", string([]rune(text)[:minInt(20, len([]rune(text)))]))
-		return data, nil
-	}
-
-	// 2. 调用TTS API
-	c.logger.Infof("[TTS合成] %s...", string([]rune(text)[:minInt(30, len([]rune(text)))]))
-	start := time.Now()
-
-	// 构建请求体，包含模型配置和推理参数
-	reqMap := map[string]interface{}{
-		"text": text,
-	}
-
-	// 添加模型配置（如果已设置）
-	if c.model.SovitsModel != "" {
-		reqMap["sovits_model_path"] = c.model.SovitsModel
-	}
-	if c.model.GPTModel != "" {
-		reqMap["gpt_model_path"] = c.model.GPTModel
-	}
-	if c.model.ReferenceAudio != "" {
-		reqMap["refer_wav_path"] = c.model.ReferenceAudio
-	}
-	if c.model.ReferenceText != "" {
-		reqMap["prompt_text"] = c.model.ReferenceText
-	}
-	if c.model.ReferenceLang != "" {
-		reqMap["prompt_language"] = c.model.ReferenceLang
-	}
-	if c.model.TextLang != "" {
-		reqMap["text_language"] = c.model.TextLang
-	}
-
-	// 添加推理参数（如果已设置）
-	if c.inference.BatchSize > 0 {
-		reqMap["batch_size"] = c.inference.BatchSize
-	}
-	if c.inference.SampleSteps > 0 {
-		reqMap["sample_steps"] = c.inference.SampleSteps
-	}
-	if c.inference.SplitInterval > 0 {
-		reqMap["split_interval"] = c.inference.SplitInterval
-	}
-	if c.inference.Speed > 0 {
-		reqMap["speed"] = c.inference.Speed
-	}
-	if c.inference.TopK > 0 {
-		reqMap["top_k"] = c.inference.TopK
-	}
-	if c.inference.TopP > 0 {
-		reqMap["top_p"] = c.inference.TopP
-	}
-	if c.inference.Temperature > 0 {
-		reqMap["temperature"] = c.inference.Temperature
-	}
-	if c.inference.RepetitionPenalty > 0 {
-		reqMap["repetition_penalty"] = c.inference.RepetitionPenalty
-	}
-
-	reqBody, _ := json.Marshal(reqMap)
-
-	req, err := http.NewRequestWithContext(ctx, "POST",
-		c.baseURL+"/tts", bytes.NewReader(reqBody))
+	body, err := json.Marshal(map[string]string{"text": text})
 	if err != nil {
-		return nil, fmt.Errorf("create request: %w", err)
+		return Result{}, fmt.Errorf("marshal tts request: %w", err)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/tts", bytes.NewReader(body))
+	if err != nil {
+		return Result{}, fmt.Errorf("create tts request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.secret)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("http request: %w", err)
+		c.failed(err)
+		return Result{}, fmt.Errorf("tts request: %w: %w", err, ErrUnavailable)
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("TTS API error %d: %s", resp.StatusCode, string(body))
+	if resp.StatusCode != http.StatusOK {
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
+		err = fmt.Errorf("tts gateway status %d", resp.StatusCode)
+		c.failed(err)
+		return Result{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
 	}
-
-	// 3. 读取音频数据
-	audioData, err := io.ReadAll(resp.Body)
+	audio, err := io.ReadAll(io.LimitReader(resp.Body, 16*1024*1024))
 	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
+		c.failed(err)
+		return Result{}, fmt.Errorf("read tts audio: %w: %w", err, ErrUnavailable)
 	}
+	if len(audio) < 12 || string(audio[:4]) != "RIFF" || string(audio[8:12]) != "WAVE" {
+		c.failed(ErrInvalidAudio)
+		return Result{}, ErrInvalidAudio
+	}
+	c.succeeded()
+	return Result{Audio: audio, Cache: resp.Header.Get("X-TTS-Cache")}, nil
+}
 
-	elapsed := time.Since(start)
-	c.logger.Infof("[TTS完成] %.1fs, %dKB", elapsed.Seconds(), len(audioData)/1024)
-
-	// 4. 存入缓存
+func (c *Client) failed(cause error) {
 	c.mu.Lock()
-	os.WriteFile(cachePath, audioData, 0644)
+	defer c.mu.Unlock()
+	c.consecutiveFails++
+	if c.consecutiveFails >= 3 {
+		c.circuitUntil = time.Now().Add(30 * time.Second)
+		c.consecutiveFails = 0
+		if c.logger != nil {
+			c.logger.Warnf("[TTS] 熔断30秒: %v", cause)
+		}
+	}
+}
+
+func (c *Client) succeeded() {
+	c.mu.Lock()
+	c.consecutiveFails = 0
 	c.mu.Unlock()
-
-	return audioData, nil
-}
-
-// HealthCheck 检查TTS服务是否在线
-func (c *Client) HealthCheck(ctx context.Context) error {
-	req, _ := http.NewRequestWithContext(ctx, "GET", c.baseURL+"/health", nil)
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("TTS服务不可用: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("TTS服务异常: HTTP %d", resp.StatusCode)
-	}
-	return nil
-}
-
-func (c *Client) hashText(text string) string {
-	h := md5.Sum([]byte(text))
-	return hex.EncodeToString(h[:])
-}
-
-func minInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

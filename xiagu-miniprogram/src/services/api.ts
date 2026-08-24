@@ -18,6 +18,23 @@ const BASE_URL = 'https://xiagu-miniprogram-d7dbpz54358b2f-1410097615.ap-shangha
 
 type LoginResult = { token: string; user: any }
 
+export type TTSSegment = {
+  index: number
+  text: string
+  ticket: string
+}
+
+export type AIChatResult = {
+  reply: string
+  audio_base64?: string
+  audio_ready: boolean
+  mode: string
+  tts?: {
+    available: boolean
+    segments: TTSSegment[]
+  }
+}
+
 let loginPromise: Promise<LoginResult> | null = null
 
 async function loginWithWechat(): Promise<LoginResult> {
@@ -120,7 +137,7 @@ export const api = {
   selectHero: (heroId: string) =>
     request<any>('/user/hero', 'PUT', { hero_id: heroId }),
 
-  // AI对话（核心：文本+语音一起返回）
+  // AI对话：文字立即返回；语音片段随后通过受票据保护的接口获取。
   chat: (data: {
     hero_id: string
     message: string
@@ -129,12 +146,29 @@ export const api = {
     poi_id?: string
     need_tts?: boolean
   }) =>
-    request<{
-      reply: string
-      audio_base64?: string
-      audio_ready: boolean
-      mode: string
-    }>('/ai/chat', 'POST', data),
+    request<AIChatResult>('/ai/chat', 'POST', data),
+
+  getTTSSegment: async (data: { hero_id: string; text: string; ticket: string }) => {
+    let token = Taro.getStorageSync('token')
+    if (!token) token = (await ensureLogin()).token
+    const result = await Taro.request({
+      url: `${BASE_URL}/ai/tts/segment`,
+      method: 'POST',
+      data,
+      // A cache miss may include queued GPU inference; keep this above the
+      // CloudBase TTS gateway timeout instead of cancelling at 20 seconds.
+      timeout: 90000,
+      responseType: 'arraybuffer',
+      header: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    if (result.statusCode !== 200) {
+      throw new Error('语音服务暂时不可用')
+    }
+    return result.data as ArrayBuffer
+  },
 
   // POI
   getPOIList: (cityCode: string) =>
@@ -175,23 +209,6 @@ export const api = {
       }
       message: string
     }>('/checkin', 'POST', data),
-
-  // TTS单独接口（如果需要独立调用）
-  tts: (text: string) =>
-    new Promise<ArrayBuffer>((resolve, reject) => {
-      Taro.request({
-        url: `${BASE_URL}/tts`,
-        method: 'POST',
-        data: { text },
-        header: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Taro.getStorageSync('token')}`,
-        },
-        responseType: 'arraybuffer',
-        success: (res) => resolve(res.data as ArrayBuffer),
-        fail: (err) => reject(err),
-      })
-    }),
 
   // 回忆模式语音（彩蛋预生成语音）
   getMemoryTTSList: () =>

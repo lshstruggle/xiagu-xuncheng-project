@@ -37,7 +37,7 @@ Go Gin HTTP 云函数（0.0.0.0:9000）
 - 不再使用 MySQL 或外部 Redis。
 - 由于 CloudBase 控制台的“MongoDB 连接管理”只支持对接腾讯云 MongoDB 实例，本项目改用 CloudBase 数据库 HTTP API，而非 MongoDB URI 直连。
 - AI 仅保留文字回复，不返回实时 TTS 音频。
-- 元器当前接入不使用 Token，已删除 `YUANQI_TOKEN` 配置及请求头依赖。
+- 元器凭证通过 CloudBase `YUANQI_TOKEN` 环境变量注入，客户端以 `Authorization: Bearer <token>` 调用；不得将 Token 写入仓库或日志。
 - 原有固定剧情音频继续使用 CloudBase 云存储。
 
 ## 3. 主要修改内容与原因
@@ -82,7 +82,7 @@ Go Gin HTTP 云函数（0.0.0.0:9000）
 - 开发环境仍可显式指定本地配置文件。
 - Serverless 默认值包括端口 9000、release 模式、JWT 7 天、CloudBase 数据库超时 10 秒。
 - 启动前校验必填项、JWT 密钥长度、超时、端口和 release CORS 来源。
-- 删除 Redis、MongoDB URI、实时 TTS 和元器 Token 运行配置。
+- 删除 Redis、MongoDB URI 和本地实时 TTS 运行配置；元器 Token 改为仅由云函数环境变量注入。
 
 云端所需配置名：
 
@@ -97,6 +97,7 @@ WECHAT_APP_ID
 WECHAT_APP_SECRET
 JWT_SECRET
 YUANQI_BASE_URL
+YUANQI_TOKEN
 YUANQI_ASSISTANT_ID
 ALLOWED_ADMIN_ORIGINS
 ```
@@ -477,3 +478,25 @@ unset ADMIN_PASSWORD
 Go Gin 后端已在保留原业务分层和已上线小程序主要交互的前提下，完成 CloudBase HTTP 云函数化、CloudBase 文档数据库 HTTP 适配、真实微信用户隔离、权威奖励、并发与幂等控制。
 
 测试环境已完成端到端验收，下一阶段应以“正式环境配置、公共数据幂等导入、小比例发布与可观测性”为主，不再扩大核心业务改造范围。
+
+## 13. 2026-08-15：AI 对话分句流式 TTS
+
+本次将 AI 对话的实时语音恢复为独立的 CloudStudio GPU 服务，不在 CloudBase 函数中加载模型：
+
+```text
+小程序 /ai/chat（文字立即显示）
+  → CloudBase Go（分句 + 两分钟票据）
+  → /ai/tts/segment（用户 JWT + 票据）
+  → CloudStudio HTTPS（密钥鉴权）
+  → Nginx → Gunicorn 单 worker → GPT-SoVITS 李白模型
+```
+
+- 每句最长 35 字；小程序播放当前句时预取下一句 WAV，不再使用 Base64 音频。
+- 票据绑定用户、英雄、文本哈希、片段序号与有效期；票据篡改、过期、跨用户或文本不匹配均拒绝。
+- Go 客户端连接超时 3 秒、总超时 15 秒、最多 2 个连接，连续 3 次失败后熔断 30 秒。
+- CloudStudio 服务只公开 `/health`、`/ready`、`/tts`，采用 1 推理 + 2 排队、15 秒超时、2 GB LRU 缓存、原子写入与不含正文的日志。
+- TTS 未配置、服务休眠、429、超时或播放失败都保留 AI 文字和 HTTP 200；关闭 `TTS_ENABLED` 即可回滚为纯文字。
+
+主要文件：`tts_server.py`、`tts-deploy/`、`xiagu-server/internal/service/tts_service.go`、`xiagu-server/pkg/external/sovits/client.go`、`xiagu-miniprogram/src/services/tts-player.ts`。
+
+本地已验证：Python 语法检查、Go 票据/分句/配置测试、Go 编译包测试和小程序 `npm run build:weapp`。完整上传、GPU 推理、Supervisor 自恢复、CloudBase 到 CloudStudio 连通性和真机播放须在部署环境按 `tts-deploy/README.md` 验收。

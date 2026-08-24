@@ -64,6 +64,17 @@ func (c *Config) Validate() error {
 	if c.Yuanqi.Timeout <= 0 {
 		return errors.New("yuanqi.timeout must be greater than 0")
 	}
+	if c.TTS.Enabled {
+		if strings.TrimSpace(c.TTS.BaseURL) == "" || strings.TrimSpace(c.TTS.SharedSecret) == "" {
+			return errors.New("tts.base_url and tts.shared_secret are required when tts.enabled")
+		}
+		if c.TTS.Timeout <= 0 {
+			return errors.New("tts.timeout must be greater than 0")
+		}
+		if c.TTS.MaxSegmentRunes < 1 || c.TTS.MaxSegmentRunes > 35 {
+			return errors.New("tts.max_segment_runes must be between 1 and 35")
+		}
+	}
 
 	if c.Server.Mode == gin.ReleaseMode && !containsNonEmptyValue(c.Server.AllowedAdminOrigins) {
 		return errors.New("server.allowed_admin_origins is required in release mode")

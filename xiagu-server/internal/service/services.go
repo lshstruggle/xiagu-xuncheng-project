@@ -3,6 +3,7 @@ package service
 import (
 	"xiagu-server/internal/config"
 	"xiagu-server/internal/repository"
+	"xiagu-server/pkg/external/sovits"
 	"xiagu-server/pkg/external/wechat"
 	"xiagu-server/pkg/external/yuanqi"
 )
@@ -19,6 +20,7 @@ type Services struct {
 	Challenge     *ChallengeService
 	Achievement   *AchievementService
 	RouteProgress *RouteProgressService
+	TTS           *TTSService
 }
 
 func NewServices(
@@ -26,11 +28,13 @@ func NewServices(
 	cfg *config.Config,
 	yq *yuanqi.Client,
 	wc *wechat.Auth,
+	ttsClient *sovits.Client,
 ) (*Services, error) {
-
+	tts := NewTTSService(cfg, ttsClient)
 	return &Services{
 		User:          NewUserService(repos, cfg, wc),
-		AI:            NewAIService(repos, cfg, yq),
+		TTS:           tts,
+		AI:            NewAIService(repos, cfg, yq, tts),
 		Checkin:       NewCheckinService(repos, cfg),
 		POI:           NewPOIService(repos, cfg),
 		EasterEgg:     NewEasterEggService(repos.DB),

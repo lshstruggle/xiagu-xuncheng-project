@@ -8,6 +8,7 @@ import (
 type Handlers struct {
 	User          *UserHandler
 	AI            *AIHandler
+	TTS           *TTSHandler
 	Checkin       *CheckinHandler
 	POI           *POIHandler
 	EasterEgg     *EasterEggHandler
@@ -26,6 +27,7 @@ func NewHandlers(svcs *service.Services, db *database.Collections) *Handlers {
 	return &Handlers{
 		User:          &UserHandler{svcs: svcs},
 		AI:            &AIHandler{svcs: svcs},
+		TTS:           &TTSHandler{svcs: svcs},
 		Checkin:       &CheckinHandler{svcs: svcs},
 		POI:           &POIHandler{svcs: svcs},
 		EasterEgg:     NewEasterEggHandler(svcs.EasterEgg),

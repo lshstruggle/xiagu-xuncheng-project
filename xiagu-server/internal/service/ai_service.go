@@ -16,16 +16,19 @@ import (
 	"xiagu-server/pkg/logger"
 )
 
-const MaxReplyRunes = 150
+// MaxReplyRunes matches the Yuanqi agent's hard reply budget.  Keep this
+// guard in the API too: an upstream prompt is guidance rather than a limit.
+const MaxReplyRunes = 100
 
 type AIService struct {
 	repos  *repository.Repos
 	cfg    *config.Config
 	yuanqi *yuanqi.Client
+	tts    *TTSService
 }
 
-func NewAIService(repos *repository.Repos, cfg *config.Config, yq *yuanqi.Client) *AIService {
-	return &AIService{repos: repos, cfg: cfg, yuanqi: yq}
+func NewAIService(repos *repository.Repos, cfg *config.Config, yq *yuanqi.Client, tts *TTSService) *AIService {
+	return &AIService{repos: repos, cfg: cfg, yuanqi: yq, tts: tts}
 }
 
 // === 请求/响应 ===
@@ -40,10 +43,11 @@ type AIChatReq struct {
 }
 
 type AIChatResp struct {
-	Reply       string `json:"reply"`
-	AudioBase64 string `json:"audio_base64,omitempty"`
-	AudioReady  bool   `json:"audio_ready"`
-	Mode        string `json:"mode"`
+	Reply       string      `json:"reply"`
+	AudioBase64 string      `json:"audio_base64,omitempty"`
+	AudioReady  bool        `json:"audio_ready"`
+	Mode        string      `json:"mode"`
+	TTS         TTSResponse `json:"tts"`
 }
 
 // === 对话主函数 ===
@@ -108,7 +112,7 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 		reply = s.fallbackReply()
 	}
 
-	// 4. 截断到150字
+	// 4. Enforce the reply budget without leaving a visible "..." fragment.
 	reply = s.truncate(reply, MaxReplyRunes)
 
 	// 5. 保存对话历史
@@ -128,6 +132,10 @@ func (s *AIService) Chat(ctx context.Context, userID string, req *AIChatReq) (*A
 		Reply:      reply,
 		AudioReady: false,
 		Mode:       req.Mode,
+	}
+	if req.NeedTTS && s.tts != nil {
+		// Tickets are issued after the text reply and never gate its response.
+		resp.TTS = s.tts.BuildResponse(userID, req.HeroID, reply)
 	}
 
 	return resp, nil
@@ -230,11 +238,28 @@ func (s *AIService) recentValidMessages(msgs []model.ChatMessage, maxMsgs int) [
 }
 
 func (s *AIService) truncate(text string, maxRunes int) string {
-	if utf8.RuneCountInString(text) <= maxRunes {
+	text = strings.TrimSpace(text)
+	if maxRunes <= 0 || utf8.RuneCountInString(text) <= maxRunes {
 		return text
 	}
-	r := []rune(text)
-	return string(r[:maxRunes-3]) + "..."
+
+	runes := []rune(text)
+	limit := minInt(len(runes), maxRunes)
+	// Prefer a completed sentence, then a natural clause boundary.  This keeps
+	// the chat bubble readable while guaranteeing the configured length cap.
+	for i := limit - 1; i >= 0; i-- {
+		if strings.ContainsRune("。！？!?；;", runes[i]) {
+			return strings.TrimSpace(string(runes[:i+1]))
+		}
+	}
+	for i := limit - 1; i >= 0; i-- {
+		if strings.ContainsRune("，、,:：", runes[i]) {
+			return strings.TrimSpace(string(runes[:i])) + "。"
+		}
+	}
+	// An unpunctuated upstream response still gets a clean ending, never an
+	// ellipsis that looks like a rendering failure.
+	return strings.TrimSpace(string(runes[:limit-1])) + "。"
 }
 
 func (s *AIService) fallbackReply() string {

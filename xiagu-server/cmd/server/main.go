@@ -17,6 +17,7 @@ import (
 	"xiagu-server/internal/repository"
 	"xiagu-server/internal/router"
 	"xiagu-server/internal/service"
+	"xiagu-server/pkg/external/sovits"
 	"xiagu-server/pkg/external/wechat"
 	"xiagu-server/pkg/external/yuanqi"
 	"xiagu-server/pkg/logger"
@@ -68,6 +69,7 @@ func main() {
 	// 4. 初始化外部客户端
 	yuanqiClient := yuanqi.NewClient(
 		cfg.Yuanqi.BaseURL,
+		cfg.Yuanqi.Token,
 		cfg.Yuanqi.AssistantID,
 		cfg.Yuanqi.Timeout,
 		cfg.Yuanqi.MaxRetries,
@@ -76,10 +78,18 @@ func main() {
 	logger.Log.Info("腾讯元器客户端 就绪")
 
 	wechatAuth := wechat.NewAuth(cfg.WeChat.AppID, cfg.WeChat.AppSecret)
+	ttsClient := sovits.NewClient(
+		cfg.TTS.Enabled,
+		cfg.TTS.BaseURL,
+		cfg.TTS.SharedSecret,
+		cfg.TTS.Timeout,
+		cfg.TTS.MaxSegmentRunes,
+		logger.Log,
+	)
 
 	// 5. 初始化各层
 	repos := repository.NewRepos(collections)
-	svcs, err := service.NewServices(repos, cfg, yuanqiClient, wechatAuth)
+	svcs, err := service.NewServices(repos, cfg, yuanqiClient, wechatAuth, ttsClient)
 	if err != nil {
 		log.Fatalf("初始化服务失败: %v", err)
 	}
